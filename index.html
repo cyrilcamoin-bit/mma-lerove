@@ -1048,6 +1048,35 @@ function renderCats(){
     // Contenu selon statut
     if(ac.statut==="attente"){
       h+="<div style=\"font-family:var(--fm);font-size:.6rem;color:var(--muted);margin-bottom:14px;line-height:1.8\">"+fighters.length+" combattant(s) inscrits dans cette catégorie d'âge.<br>Ouvrez la pesée quand vous êtes prêt à accueillir cette catégorie.</div>";
+      // Liste des combattants
+      if(fighters.length>0){
+        h+="<div style=\"margin-bottom:14px\">";
+        h+="<div style=\"font-family:var(--fh);font-size:.7rem;letter-spacing:2px;color:var(--red2);margin-bottom:8px\">COMBATTANTS INSCRITS</div>";
+        h+="<table style=\"width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.6rem\">";
+        h+="<tr style=\"color:var(--muted);border-bottom:1px solid rgba(255,255,255,.08)\">";
+        h+="<th style=\"text-align:left;padding:6px 8px\">#</th>";
+        h+="<th style=\"text-align:left;padding:6px 8px\">NOM</th>";
+        h+="<th style=\"text-align:left;padding:6px 8px\">PRÉNOM</th>";
+        h+="<th style=\"text-align:left;padding:6px 8px\">CLUB</th>";
+        h+="<th style=\"text-align:center;padding:6px 8px\">GENRE</th>";
+        h+="<th style=\"text-align:center;padding:6px 8px\">ÂGE</th>";
+        h+="<th style=\"text-align:center;padding:6px 8px\">POIDS DÉC.</th>";
+        h+="</tr>";
+        fighters.forEach(function(f,i){
+          var rowBg = i%2===0 ? "rgba(255,255,255,.02)" : "transparent";
+          h+="<tr style=\"background:"+rowBg+";border-bottom:1px solid rgba(255,255,255,.04)\">";
+          h+="<td style=\"padding:7px 8px;color:var(--muted)\">"+(i+1)+"</td>";
+          h+="<td style=\"padding:7px 8px;font-weight:700;color:var(--fg)\">"+esc(f.nom)+"</td>";
+          h+="<td style=\"padding:7px 8px;color:var(--fg)\">"+esc(f.pre)+"</td>";
+          h+="<td style=\"padding:7px 8px;color:var(--muted)\">"+esc(f.club)+"</td>";
+          h+="<td style=\"padding:7px 8px;text-align:center\">"+(f.g==="M"?"👦":"👧")+"</td>";
+          h+="<td style=\"padding:7px 8px;text-align:center;color:var(--muted)\">"+f.age+" ans</td>";
+          h+="<td style=\"padding:7px 8px;text-align:center;color:var(--gold)\">"+f.pdsD+" kg</td>";
+          h+="</tr>";
+        });
+        h+="</table>";
+        h+="</div>";
+      }
       h+="<div class=\"cat-actions\">";
       h+="<button class=\"btn su\" onclick=\"ouvrirPesee('"+ac.id+"')\">⚖️ OUVRIR LA PESÉE</button>";
       h+="</div>";
