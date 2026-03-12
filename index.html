@@ -853,8 +853,12 @@ function applyRemoteState(data){
 
     var changed = false;
     if(data.combattants){
+      // Firebase retourne objet ou tableau — normaliser en tableau
+      var cbArr = Array.isArray(data.combattants)
+        ? data.combattants
+        : Object.values(data.combattants);
       // Reconstruire COMBATTANTS complet depuis Firebase — source de vérité unique
-      COMBATTANTS = data.combattants.map(function(sc){
+      COMBATTANTS = cbArr.map(function(sc){
         return {
           id:      sc.id,
           nom:     sc.nom     || '',
