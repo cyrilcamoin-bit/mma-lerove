@@ -917,14 +917,14 @@ function doLogin(){
     };
     if(hex!==H[r]){var le=$('lerr');if(le)le.style.display='block';var ip=$('inp-code');if(ip){ip.value='';ip.focus();}return;}
     var le=$('lerr');if(le)le.style.display='none';
-    role=r;showHybridNav();
+    role=r;try{localStorage.setItem("mma_session_role",r);}catch(e){}showHybridNav();
     if(role==='admin'){var at=$('admintabs');if(at)at.style.display='block';showPage('pg-admin');renderCats();toast('Acces Admin','ok');}
     else switchToTable(role);
     updateHnavHighlight();
   }).catch(function(){
     var CODES={admin:'camoincyril',T1:'table1',T2:'table2',T3:'table3',T4:'table4'};
     if(code.trim().toLowerCase()!==CODES[r]){var le=$('lerr');if(le)le.style.display='block';return;}
-    role=r;showHybridNav();
+    role=r;try{localStorage.setItem("mma_session_role",r);}catch(e){}showHybridNav();
     if(role==='admin'){showPage('pg-admin');renderCats();toast('Acces Admin','ok');}else switchToTable(role);
     updateHnavHighlight();
   });
@@ -3746,7 +3746,15 @@ function deleteClub(i){if(!confirm('Supprimer '+CLUBS[i]+' ?'))return;CLUBS.spli
   var hasState = loadState();
   // Reconstruire COMBATTANTS depuis inscriptions APRÈS loadState
   buildCombattantsFromInscriptions();
-  showPage("pg-public");
+  // Restaurer session
+  try{
+    var _savedRole=localStorage.getItem("mma_session_role");
+    if(_savedRole){
+      role=_savedRole;
+      if(role==="admin"){showHybridNav();var at=$("admintabs");if(at)at.style.display="block";showPage("pg-admin");renderCats();}
+      else{showHybridNav();switchToTable(role);}
+    } else { showPage("pg-public"); }
+  }catch(e){ showPage("pg-public"); }
   updatePublicStats();
   TimerManager.set('countdown',updatePublicStats,1000);
 
