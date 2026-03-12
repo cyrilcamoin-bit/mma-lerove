@@ -697,8 +697,7 @@ function loadState(){
     var state = JSON.parse(raw);
     if(!state || !state.fights) return false;
 
-    // Restaurer l'état dynamique des combattants (présence, poids, cat)
-    // COMBATTANTS vient des inscriptions — on ne restaure que l'état dynamique
+    // Restaurer uniquement l'état dynamique (présence, poids pesée)
     if(state.combattants){
       state.combattants.forEach(function(sc){
         var cb = COMBATTANTS.find(function(x){return x.id===sc.id;});
@@ -763,7 +762,7 @@ var _fbListening = false;
 var _fbIgnoreNext = false; // évite la boucle écriture→lecture
 
 // Clé de compétition — change-la pour isoler chaque événement
-var COMP_KEY = "interclubs_18avril";
+var COMP_KEY = "interclubs_18avril_v2";
 
 
 
@@ -800,10 +799,13 @@ function fbInit(){
     // Sync inscriptions publiques
     _fbDb.ref('inscriptions_'+COMP_KEY).on('value',function(snap){
       var data=snap.val();
-      if(data&&Array.isArray(data)){
-        _inscriptions=data;
+      if(data){
+        // Firebase retourne objet ou tableau selon comment c'est stocké
+        _inscriptions = Array.isArray(data) ? data : Object.values(data);
         try{localStorage.setItem(INSC_KEY,JSON.stringify(_inscriptions));}catch(e){}
+        buildCombattantsFromInscriptions();
         renderInscList(); updateInscCount(); updatePublicStats();
+        if(role==='admin') renderInscriptions();
       }
     });
     // Sync état compétition
