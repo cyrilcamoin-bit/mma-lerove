@@ -3499,12 +3499,22 @@ function submitInscription(){
   var photo = (photoEl && photoEl.src && photoEl.src.startsWith('data:')) ? photoEl.src : null;
   _inscriptions.push({id:'ins-'+Date.now(),nom:nom,pre:pre,age:age,poids:pds,g:g,club:club,tel:tel,email:email,cat:ac?ac.lbl:'Hors catégorie',date:new Date().toLocaleDateString('fr-FR'),statut:'en attente',photo:photo});
   saveInscriptions();
-  toast('✅ Inscription enregistrée — '+nom+' '+pre,'ok');
-  ['insc-nom','insc-prenom','insc-age','insc-poids','insc-tel','insc-email'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('insc-genre').value='';document.getElementById('insc-club').value='';
-  if(auth)auth.checked=false;
-  var photoInput=document.getElementById('insc-photo');if(photoInput)photoInput.value='';
-  var photoPrev=document.getElementById('insc-photo-preview');if(photoPrev)photoPrev.style.display='none';
+  // Afficher la page de confirmation
+  var wrap = document.getElementById('insc-form-wrap');
+  if(wrap){
+    wrap.innerHTML = "<div style='text-align:center;padding:40px 20px'>" +
+      "<div style='font-size:4rem;margin-bottom:20px'>🏆</div>" +
+      "<div style='font-family:var(--fh);font-size:1.6rem;letter-spacing:3px;color:var(--gold);margin-bottom:12px'>INSCRIPTION VALIDÉE</div>" +
+      "<div style='font-family:var(--fh);font-size:1rem;letter-spacing:2px;color:#fff;margin-bottom:8px'>avec succès !</div>" +
+      "<div style='font-family:var(--fm);font-size:.75rem;color:var(--muted);margin:20px 0;line-height:1.9'>" +
+        "<span style='color:var(--red2);font-size:.9rem;font-family:var(--fh)'>" + nom + " " + pre + "</span><br>" +
+        "est bien inscrit(e) à la compétition.<br><br>" +
+        "<span style='font-size:1.1rem'>📅</span> On vous attend le <strong style='color:#fff'>Samedi 18 Avril</strong><br>" +
+        "au <strong style='color:#fff'>Gymnase Blaise GOUIRAN</strong><br>12 rue du Stade · 13740 LE ROVE" +
+      "</div>" +
+      "<button onclick='showPage(\"pg-public\")' style='background:var(--red2);border:none;border-radius:8px;padding:14px 28px;color:#fff;font-family:var(--fh);font-size:.8rem;letter-spacing:2px;cursor:pointer;margin-top:10px'>🏠 RETOUR À L\'ACCUEIL</button>" +
+    "</div>";
+  }
   renderInscList();updateInscCount();
 }
 function renderInscList(){
