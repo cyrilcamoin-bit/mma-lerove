@@ -605,23 +605,18 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
         <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:2px;color:var(--gold);margin-bottom:8px">📋 AUTORISATION PARENTALE</div>
         <div style="font-family:var(--fm);font-size:.55rem;color:var(--muted);line-height:1.9;margin-bottom:10px">J'autorise mon enfant à participer à la compétition interclubs MMA du 18 Avril 2026 organisée par Mix Martial Academy. Je certifie que mon enfant est titulaire d'une licence sportive valide et apte médicalement.</div>
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
-          <input type="checkbox" id="insc-autorisation" style="margin-top:2px;width:16px;height:16px;cursor:pointer;accent-color:var(--gold)">
-          <span style="font-family:var(--fm);font-size:.58rem;color:var(--text);line-height:1.7"><strong>Lu et approuvé</strong> — J'autorise la participation de mon enfant.</span>
-        </label>
-      </div>
-      <div id="insc-error" style="display:none;color:#ef4444;font-family:var(--fm);font-size:.58rem;margin-bottom:10px;padding:8px;background:rgba(239,68,68,.08);border-radius:6px"></div>
-      <button onclick="submitInscription()" class="btn su" style="width:100%;font-family:var(--fm);font-size:.65rem;letter-spacing:2px;padding:14px">✅ CONFIRMER L'INSCRIPTION</button>
-      <div style="font-family:var(--fm);font-size:.5rem;color:var(--muted);text-align:center;margin-top:8px">Inscription soumise à validation par l'organisateur.</div>
-    </div>
-    <div style="margin-top:16px">
-      <div style="font-family:var(--fh);font-size:.85rem;letter-spacing:3px;margin-bottom:8px;color:var(--muted)">DÉJÀ INSCRITS <span id="inscrit-count" style="color:var(--gold)"></span></div>
-      <div id="insc-list"></div>
-    </div>
-  </div>
-</div>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>
+                <div style="margin-bottom:16px">
+        <label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px">📸 PHOTO DU COMBATTANT (optionnel)</label>
+        <div style="background:rgba(255,255,255,.04);border:1px dashed var(--border2);border-radius:8px;padding:12px;text-align:center">
+          <input type="file" id="insc-photo" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)">
+          <div id="insc-photo-preview" style="display:none;margin-bottom:10px">
+            <img id="insc-photo-img" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)">
+          </div>
+          <button type="button" onclick="document.getElementById('insc-photo').click()" style="background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:6px;padding:8px 16px;color:var(--fg);font-family:var(--fm);font-size:.6rem;letter-spacing:1px;cursor:pointer">
+            📷 CHOISIR UNE PHOTO
+          </button>
+          <div style="font-family:var(--fm);font-size:.52rem;color:var(--muted);margin-top:8px;line-height:1.7">
+            Cette photo nous aide à <strong style="color:var(--text)">reconnaître votre enfant le jour J</strong> pour simplifier l'appel et l'organisation. Elle reste confidentielle et est utilisée uniqueme
 function $(id){ return document.getElementById(id); }
 function esc(v){
   if(v==null) return '';
@@ -1066,7 +1061,8 @@ function renderCats(){
           var rowBg = i%2===0 ? "rgba(255,255,255,.02)" : "transparent";
           h+="<tr style=\"background:"+rowBg+";border-bottom:1px solid rgba(255,255,255,.04)\">";
           h+="<td style=\"padding:7px 8px;color:var(--muted)\">"+(i+1)+"</td>";
-          h+="<td style=\"padding:7px 8px;font-weight:700;color:var(--fg)\">"+esc(f.nom)+"</td>";
+          var fPhotoThumb = f.photo ? "<img src='"+f.photo+"' style='width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);margin-right:6px;vertical-align:middle'>" : "<span style='display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--dark3);text-align:center;line-height:28px;font-size:.7rem;margin-right:6px;vertical-align:middle'>👤</span>";
+          h+="<td style=\"padding:7px 8px;font-weight:700;color:var(--fg)\">"+fPhotoThumb+esc(f.nom)+"</td>";
           h+="<td style=\"padding:7px 8px;color:var(--fg)\">"+esc(f.pre)+"</td>";
           h+="<td style=\"padding:7px 8px;color:var(--muted)\">"+esc(f.club)+"</td>";
           h+="<td style=\"padding:7px 8px;text-align:center\">"+(f.g==="M"?"👦":"👧")+"</td>";
@@ -3420,6 +3416,20 @@ function saveInscriptions(){
   fbSaveInscriptions();
 }
 function updateInscCount(){var el=document.getElementById('inscrit-count');if(el)el.textContent=_inscriptions.length?'('+_inscriptions.length+')':'';}
+
+function previewPhoto(input){
+  if(input.files && input.files[0]){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = document.getElementById('insc-photo-img');
+      var prev = document.getElementById('insc-photo-preview');
+      if(img){ img.src = e.target.result; }
+      if(prev){ prev.style.display = 'block'; }
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
 function showInscription(){
   showPage('pg-inscription');
   var sel=document.getElementById('insc-club');
@@ -3463,12 +3473,16 @@ function submitInscription(){
   loadInscriptions();
   if(_inscriptions.find(function(x){return x.nom===nom&&x.pre===pre&&x.club===club;})){err.style.display='block';err.textContent='⚠ Cette inscription existe déjà ('+nom+' '+pre+' / '+club+')';return;}
   var ac=getAgeCat(age);
-  _inscriptions.push({id:'ins-'+Date.now(),nom:nom,pre:pre,age:age,poids:pds,g:g,club:club,tel:tel,email:email,cat:ac?ac.lbl:'Hors catégorie',date:new Date().toLocaleDateString('fr-FR'),statut:'en attente'});
+  var photoEl = document.getElementById('insc-photo-img');
+  var photo = (photoEl && photoEl.src && photoEl.src.startsWith('data:')) ? photoEl.src : null;
+  _inscriptions.push({id:'ins-'+Date.now(),nom:nom,pre:pre,age:age,poids:pds,g:g,club:club,tel:tel,email:email,cat:ac?ac.lbl:'Hors catégorie',date:new Date().toLocaleDateString('fr-FR'),statut:'en attente',photo:photo});
   saveInscriptions();
   toast('✅ Inscription enregistrée — '+nom+' '+pre,'ok');
   ['insc-nom','insc-prenom','insc-age','insc-poids','insc-tel','insc-email'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('insc-genre').value='';document.getElementById('insc-club').value='';
   if(auth)auth.checked=false;
+  var photoInput=document.getElementById('insc-photo');if(photoInput)photoInput.value='';
+  var photoPrev=document.getElementById('insc-photo-preview');if(photoPrev)photoPrev.style.display='none';
   renderInscList();updateInscCount();
 }
 function renderInscList(){
@@ -3517,6 +3531,26 @@ function deleteClub(i){if(!confirm('Supprimer '+CLUBS[i]+' ?'))return;CLUBS.spli
   showPage("pg-public");
   updatePublicStats();
   TimerManager.set('countdown',updatePublicStats,1000);
+
+  if(hasState){
+    // Bannière de reprise sur l'écran de login
+    var age = getSaveAge();
+    var banner = document.createElement("div");
+    banner.id = "resume-banner";
+    banner.style.cssText = "background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;margin:16px 0;text-align:center";
+    banner.innerHTML =
+      "<div style='font-family:var(--fh);font-size:1rem;letter-spacing:2px;color:#f59e0b;margin-bottom:4px'>💾 SESSION SAUVEGARDÉE</div>"+
+      "<div style='font-family:var(--fm);font-size:.6rem;color:var(--muted);line-height:1.8'>Compétition en cours · sauvegardée "+formatSaveAge(age)+"<br>Connectez-vous pour reprendre là où vous en étiez.</div>"+
+      "<div style='display:flex;gap:8px;margin-top:10px;justify-content:center'>"+
+      "<button class='btn su' style='font-family:var(--fm);font-size:.6rem;letter-spacing:1px' onclick='document.getElementById(\"resume-banner\").style.display=\"none\"'>✔ Reprendre</button>"+
+      "<button class='btn gh' style='font-family:var(--fm);font-size:.6rem;letter-spacing:1px' onclick='clearState();document.getElementById(\"resume-banner\").remove();toast(\"Session effacée\",\"warn\")'>✕ Nouvelle compétition</button>"+
+      "</div>";
+    var loginWrap = document.querySelector(".login-wrap") || document.querySelector(".wrap");
+    if(loginWrap) loginWrap.insertBefore(banner, loginWrap.firstChild);
+  }
+})();
+
+own',updatePublicStats,1000);
 
   if(hasState){
     // Bannière de reprise sur l'écran de login
