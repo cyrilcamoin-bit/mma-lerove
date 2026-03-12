@@ -795,7 +795,8 @@ function buildCombattantsFromInscriptions(){
       e:       EMOJIS_LIST[i % EMOJIS_LIST.length],
       present: null,
       pdsP:    null,
-      cat:     ac ? ac.lbl : 'Hors catégorie'
+      cat:     ac ? ac.lbl : 'Hors catégorie',
+      photo:   ins.photo || null
     };
   });
 }
@@ -1079,7 +1080,7 @@ function renderCats(){
           var rowBg = i%2===0 ? "rgba(255,255,255,.02)" : "transparent";
           h+="<tr style=\"background:"+rowBg+";border-bottom:1px solid rgba(255,255,255,.04)\">";
           h+="<td style=\"padding:7px 8px;color:var(--muted)\">"+(i+1)+"</td>";
-          var fPhotoThumb = f.photo ? "<img src='"+f.photo+"' style='width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);margin-right:6px;vertical-align:middle'>" : "<span style='display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--dark3);text-align:center;line-height:28px;font-size:.7rem;margin-right:6px;vertical-align:middle'>👤</span>";
+          var fPhotoThumb = (f.photo && f.photo.indexOf('data:') === 0) ? "<img src='"+f.photo+"' style='width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);margin-right:6px;vertical-align:middle'>" : "<span style='display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--dark3);text-align:center;line-height:28px;font-size:.7rem;margin-right:6px;vertical-align:middle'>👤</span>";
           h+="<td style=\"padding:7px 8px;font-weight:700;color:var(--fg)\">"+fPhotoThumb+esc(f.nom)+"</td>";
           h+="<td style=\"padding:7px 8px;color:var(--fg)\">"+esc(f.pre)+"</td>";
           h+="<td style=\"padding:7px 8px;color:var(--muted)\">"+esc(f.club)+"</td>";
@@ -2964,7 +2965,8 @@ function renderInscriptions(){
       var catPds = ac ? getCatPoids(ac, cb.pdsD) : "—";
       h += "<tr>";
       h += "<td style='font-size:1.1rem'>"+cb.e+"</td>";
-      h += "<td><b style='font-family:var(--fh);letter-spacing:1px'>"+cb.nom+"</b> "+cb.pre+"</td>";
+      var cbThumb = (cb.photo && cb.photo.indexOf('data:')===0) ? "<img src='" + cb.photo + "' style='width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);margin-right:6px;vertical-align:middle'>" : "<span style='display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--dark3);text-align:center;line-height:28px;font-size:.7rem;margin-right:6px;vertical-align:middle'>👤</span>";
+      h += "<td>" + cbThumb + "<b style='font-family:var(--fh);letter-spacing:1px'>" + cb.nom + "</b> " + cb.pre + "</td>";
       h += "<td>"+cb.age+" ans</td>";
       h += "<td><span class='ins-cat-badge'>"+(ac?ac.lbl:"Hors cat.")+"</span></td>";
       h += "<td style='color:var(--gold)'>"+cb.pdsD+" kg</td>";
@@ -3017,8 +3019,8 @@ function openFighterModal(id){
       "<div class='form-group'><div class='form-label'>PRÉNOM *</div><input class='form-input' id='ff-pre' type='text' value='"+(cb?cb.pre.replace(/'/g,"&#39;"):"")+"' placeholder='Lucas'></div>"+
     "</div>"+
     "<div class='form-row'>"+
-      "<div class='form-group'><div class='form-label'>ÂGE *</div><input class='form-input' id='ff-age' type='number' min='6' max='17' value='"+(cb?cb.age:"")+"' placeholder='12' oninput='updateCatPreview()'></div>"+
-      "<div class='form-group'><div class='form-label'>POIDS DÉCLARÉ (kg) *</div><input class='form-input' id='ff-pds' type='number' min='15' max='120' step='0.1' value='"+(cb?cb.pdsD:"")+"' placeholder='42.5' oninput='updateCatPreview()'></div>"+
+      "<div class='form-group'><div class='form-label'>ÂGE *</div><input class='form-input' id='ff-age' type='number' min='6' max='17' value='"+(cb&&cb.age!==undefined?Number(cb.age):'')+"' placeholder='12' oninput='updateCatPreview()'></div>"+
+      "<div class='form-group'><div class='form-label'>POIDS DÉCLARÉ (kg) *</div><input class='form-input' id='ff-pds' type='number' min='15' max='120' step='0.1' value='"+(cb&&cb.pdsD!==undefined?Number(cb.pdsD):'')+"' placeholder='42.5' oninput='updateCatPreview()'></div>"+
     "</div>"+
     "<div class='form-group'><div class='form-label'>GENRE *</div>"+
       "<div class='form-genre-btns'>"+
