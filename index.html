@@ -829,19 +829,8 @@ function fbInit(){
         // Firebase retourne objet ou tableau selon comment c'est stocké
         _inscriptions = Array.isArray(data) ? data : Object.values(data);
         try{localStorage.setItem(INSC_KEY,JSON.stringify(_inscriptions));}catch(e){}
-        // Fusionner inscrits publics sans écraser les combattants manuels
-        var EMOJIS_LIST2=['🥊','🥋','⚡','🔥','💪','🦊','🐯','🦁','🐺','⚔'];
-        _inscriptions.forEach(function(ins,i){
-          var existId=ins.id||('ins-'+i);
-          var already=COMBATTANTS.find(function(cb){return cb.id===existId;});
-          if(!already){
-            var ac2=getAgeCat(ins.age);
-            COMBATTANTS.push({id:existId,nom:ins.nom,pre:ins.pre,age:ins.age,
-              pdsD:ins.poids,club:ins.club,g:ins.g,e:EMOJIS_LIST2[i%10],
-              present:null,pdsP:null,cat:ac2?ac2.lbl:'Hors catégorie',
-              photo:ins.photo||null,fromInsc:true});
-          }
-        });
+        // Les inscriptions publiques sont intégrées via saveState/applyRemoteState
+        // Ne pas toucher à COMBATTANTS ici
         renderInscList(); updateInscCount(); updatePublicStats();
         if(!role){try{var sr2=localStorage.getItem('mma_session_role');if(sr2){role=sr2;if(role==='admin'){showHybridNav();var at2=$('admintabs');if(at2)at2.style.display='block';showPage('pg-admin');renderCats();updateHnavHighlight();}else{showHybridNav();switchToTable(role);}}}catch(e){}}if(role==='admin') renderInscriptions();
       }
@@ -3697,10 +3686,8 @@ function deleteClub(i){if(!confirm('Supprimer '+CLUBS[i]+' ?'))return;CLUBS.spli
 
 (function(){
   loadInscriptions();
-  buildCombattantsFromInscriptions();
   if(document.readyState==='complete'){fbInit();}else{window.addEventListener('load',fbInit);}
   var hasState=loadState();
-  buildCombattantsFromInscriptions();
 
   // Afficher une page immédiatement
   var _savedRole=localStorage.getItem('mma_session_role');
