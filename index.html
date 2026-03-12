@@ -616,7 +616,25 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
             📷 CHOISIR UNE PHOTO
           </button>
           <div style="font-family:var(--fm);font-size:.52rem;color:var(--muted);margin-top:8px;line-height:1.7">
-            Cette photo nous aide à <strong style="color:var(--text)">reconnaître votre enfant le jour J</strong> pour simplifier l'appel et l'organisation. Elle reste confidentielle et est utilisée uniqueme
+            Cette photo nous aide à <strong style="color:var(--text)">reconnaître votre enfant le jour J</strong> pour simplifier l'appel et l'organisation. Elle reste confidentielle et est utilisée uniquement par l'équipe organisatrice.
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px"><label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+          <input type="checkbox" id="insc-autorisation" style="margin-top:2px;width:16px;height:16px;cursor:pointer;accent-color:var(--gold)">
+          <span style="font-family:var(--fm);font-size:.58rem;color:var(--text);line-height:1.7"><strong>Lu et approuvé</strong> — J'autorise la participation de mon enfant.</span>
+        </label>
+      </div>
+      <div id="insc-error" style="display:none;color:#ef4444;font-family:var(--fm);font-size:.62rem;margin-bottom:10px;padding:8px;background:rgba(239,68,68,.1);border-radius:6px"></div>
+      <button onclick="submitInscription()" style="width:100%;background:var(--red2);border:none;border-radius:8px;padding:14px;color:#fff;font-family:var(--fh);font-size:.85rem;letter-spacing:2px;cursor:pointer">✅ VALIDER L'INSCRIPTION</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+
 function $(id){ return document.getElementById(id); }
 function esc(v){
   if(v==null) return '';
@@ -3548,9 +3566,7 @@ function deleteClub(i){if(!confirm('Supprimer '+CLUBS[i]+' ?'))return;CLUBS.spli
     var loginWrap = document.querySelector(".login-wrap") || document.querySelector(".wrap");
     if(loginWrap) loginWrap.insertBefore(banner, loginWrap.firstChild);
   }
-})();
-
-own',updatePublicStats,1000);
+  TimerManager.set('countdown',updatePublicStats,1000);
 
   if(hasState){
     // Bannière de reprise sur l'écran de login
