@@ -674,6 +674,7 @@ var POOLS = {}, FIGHTS = [];
 var POOL_TABLES = {}; // cat -> 'T1'|'T2'|'T3'|'T4'|null
 var PM = {}, PD = {};
 var role = null;
+var _appelFait = {}; // t -> true si appel table déjà validé
 var cid = null, tiv = null, tsecs = 0, trun = false, twarn = false, pendwin = null;
 
 
@@ -1074,7 +1075,7 @@ function switchToTable(t,skipAppel){
   if(myPools.length===0){
     showPage("pg-list");
     document.getElementById("list-content").innerHTML="<div style=\"font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:40px;line-height:2\">⏳ EN ATTENTE DES POULES<br>Contactez l'administration</div>";
-  } else if(skipAppel){
+  } else if(skipAppel || _appelFait[t]){
     goList();
   } else {
     goAppelTable();
@@ -1130,20 +1131,25 @@ function renderAppelTable(){
     h+="</div>";
   });
 
-  // Bouton valider si tous appelés
+  // Bouton valider
   var allPoolsChecked=myPools.every(function(cat){
     var pool=POOLS[cat]; if(!pool) return true;
     var pm=PM[cat]||{};
     return pool.fighters.every(function(fi){return pm[fi.id]!==null;});
   });
 
-  h+="<div style='margin-top:8px'>";
+  var btnHtml="<div style='margin-bottom:16px'>";
   if(allPoolsChecked){
-    h+="<button class='btn su lg full' onclick='validerAppelTable()'>✅ APPEL TERMINÉ — COMMENCER</button>";
+    btnHtml+="<button class='btn su lg full' onclick='validerAppelTable()'>✅ APPEL TERMINÉ — COMMENCER</button>";
   } else {
-    h+="<button class='btn gh lg full' disabled style='opacity:.4'>⏳ Appelez tous les combattants...</button>";
+    btnHtml+="<button class='btn gh lg full' disabled style='opacity:.4'>⏳ Appelez tous les combattants...</button>";
   }
-  h+="</div>";
+  btnHtml+="</div>";
+
+  // Bouton EN HAUT (après le header) ET en bas
+  var headerEnd=h.indexOf("</div>")+6;
+  h=h.slice(0,headerEnd)+btnHtml+h.slice(headerEnd);
+  h+=btnHtml;
 
   el.innerHTML=h;
 }
@@ -1186,6 +1192,7 @@ function validerAppelTable(){
       else toast("Format recalculé : "+getFmtLabel(newFmt),"ok");
     }
   });
+  _appelFait[role]=true;
   saveState();
   goList();
   toast("✅ Appel validé — bonne compétition !","ok");
