@@ -868,6 +868,14 @@ function fbInit(){
       var data=snap.val(); if(!data) return;
       applyRemoteState(data);
     });
+    // Sync chrono live — actif dès le démarrage pour tous les appareils
+    _fbRef.child('liveChrono').on('value',function(snap){
+      window._livChronoData=snap.val();
+      _liveChrono=true; // marquer comme initialisé
+      // Mettre à jour l'affichage suivi si ouvert
+      var ps=document.getElementById('pg-suivi');
+      if(ps&&ps.style.display!=='none') renderSuivi();
+    });
     _fbListening=true;
   }catch(e){console.warn('fbInit:',e);}
 }
@@ -3320,11 +3328,7 @@ function applyRemoteState(data){
 // ── SUIVI PUBLIC ──────────────────────────────────────────────
 function showPublicSuivi(){
   showPage('pg-suivi');
-  if(_fbRef&&!_liveChrono){_liveChrono=_fbRef.child('liveChrono');_liveChrono.on('value',function(snap){
-      window._livChronoData=snap.val();
-      // Forcer un re-rendu immédiat dès que Firebase change (pause, reprise, nouveau combat)
-      renderSuivi();
-    });}
+  // Listener liveChrono déjà actif dès l'init Firebase
   _suiviTab='all'; _suiviCat='all';
   setSuiviTab('all'); renderSuiviCatFilters(); renderSuivi();
   clearInterval(_suiviTimer);
