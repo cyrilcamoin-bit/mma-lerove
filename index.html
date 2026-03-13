@@ -715,6 +715,7 @@ function saveState(){
       fights: FIGHTS,
       poolTables: POOL_TABLES,
       notifications: _notifications,
+      pd: PD,
       savedAt: Date.now()
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -761,6 +762,7 @@ function loadState(){
       });
     }
 
+    if(state.pd) PD=state.pd;
     return true;
   } catch(e){ console.warn("loadState:", e); return false; }
 }
@@ -980,6 +982,7 @@ function applyRemoteState(data){
     }
     if(data.poolTables)  { POOL_TABLES=data.poolTables; changed=true; }
     if(data.notifications){ _notifications=data.notifications; changed=true; }
+    if(data.pd){ PD=data.pd; }
 
   // Pas de restauration automatique — login obligatoire
     if(changed){
