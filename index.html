@@ -477,7 +477,7 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
 <div id="hybrid-nav" class="hybrid-nav">
   <div class="hnav-btn" id="hn-accueil" onclick="showPage('pg-public')">🏠<br>ACCUEIL</div>
   <div class="hnav-btn" id="hn-admin"  onclick="hnav('admin')" style="display:none">👑<br>ADMIN</div>
-  <div class="hnav-btn" id="hn-live"   onclick="hnav('live')">🖥️<br>SUIVI</div>
+  <div class="hnav-btn" id="hn-live"   onclick="hnav('live')" style="display:none">🖥️<br>SUIVI</div>
   <div class="hnav-btn" id="hn-T1"     onclick="hnav('T1')" style="display:none">🪑<br>TABLE 1</div>
   <div class="hnav-btn" id="hn-T2"     onclick="hnav('T2')" style="display:none">🪑<br>TABLE 2</div>
   <div class="hnav-btn" id="hn-T3"     onclick="hnav('T3')" style="display:none">🪑<br>TABLE 3</div>
@@ -1541,7 +1541,7 @@ function showHybridNav(){
   PAGES.forEach(function(p){var el=document.getElementById(p);if(el)el.classList.add('page-pb');});
   document.getElementById('pg-admin')&&document.getElementById('pg-admin').classList.add('page-pb');
   // Afficher seulement les boutons du rôle connecté
-  ['admin','T1','T2','T3','T4'].forEach(function(k){
+  ['admin','live','T1','T2','T3','T4'].forEach(function(k){
     var b=document.getElementById('hn-'+k);
     if(!b) return;
     if(role==='admin') b.style.display=(k==='admin'||k==='live')?'':'none';
