@@ -687,11 +687,29 @@ var STORAGE_KEY = "mma_comp_v7";
 function saveState(){
   try {
     var state = {
-      combattants: COMBATTANTS.map(function(cb){
-        return {id:cb.id, nom:cb.nom, pre:cb.pre, age:cb.age, pdsD:cb.pdsD,
-                club:cb.club, g:cb.g, e:cb.e||'🥋',
-                present:cb.present, pdsP:cb.pdsP, cat:cb.cat};
-      }),
+      combattants: (function(){
+        // Manuels : combattants dont l'id commence par 'c'
+        var manuels = COMBATTANTS.filter(function(cb){ return cb.id && cb.id[0]==='c'; });
+        // Inscrits publics depuis _inscriptions
+        var EMOJIS=['🥊','🥋','⚡','🔥','💪','🦊','🐯','🦁','🐺','⚔'];
+        var inscrits = _inscriptions.map(function(ins,i){
+          var ac = getAgeCat(ins.age);
+          return {id: ins.id||('ins-'+i), nom:ins.nom, pre:ins.pre,
+                  age:ins.age, pdsD:ins.poids, club:ins.club, g:ins.g||'M',
+                  e:EMOJIS[i%10], present:null, pdsP:null,
+                  cat:ac?ac.lbl:'Hors catégorie', photo:ins.photo||null};
+        });
+        // Fusionner sans doublons
+        var tous = manuels.slice();
+        inscrits.forEach(function(ins){
+          if(!tous.find(function(x){return x.id===ins.id;})) tous.push(ins);
+        });
+        return tous.map(function(cb){
+          return {id:cb.id, nom:cb.nom, pre:cb.pre, age:cb.age, pdsD:cb.pdsD,
+                  club:cb.club, g:cb.g, e:cb.e||'🥋',
+                  present:cb.present||null, pdsP:cb.pdsP||null, cat:cb.cat||null};
+        });
+      })(),
       ageCats: AGE_CATS.map(function(ac){
         return {id:ac.id, statut:ac.statut, poulesFaites:ac.poulesFaites||false};
       }),
