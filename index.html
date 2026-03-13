@@ -2534,9 +2534,13 @@ function validateResult(){
   toast("🏆 "+f[pendwin].nom+" — Victoire validee","ok");
   if(navigator.vibrate) navigator.vibrate([200,100,400]);
   showZone("z5"); renderDone(f); renderNext();
-  // Stopper le chrono local et effacer sur Firebase — combat terminé
+  // Stopper le chrono local et publier le vainqueur sur Firebase
   killTimer();
-  if(_fbRef){try{_fbRef.child('liveChrono').set({cid:null,secs:0,running:false,stopped:false,ts:Date.now()});}catch(e){}}
+  if(_fbRef){try{_fbRef.child('liveChrono').set({
+    cid:f.id, secs:0, running:false, stopped:false,
+    winner:{nom:f[pendwin].nom, pre:f[pendwin].pre, e:f[pendwin].e||'🏆'},
+    ts:Date.now()
+  });}catch(e){}}
   // Vérif fin de catégorie
   checkCatTermine(f.cat);
 
@@ -3475,10 +3479,18 @@ function fightRow(f,label){
          (lcdSecs<=10?"color:var(--red2);animation:pulse .5s infinite":(isStopped?"color:var(--red2)":(isPaused?"color:var(--muted)":"color:var(--gold)")))+
          ";letter-spacing:4px;margin-top:6px'>"+fmt(lcdSecs)+"</div>";
       if(isStopped){
-        s+="<div style='text-align:center;font-family:var(--fh);font-size:.7rem;letter-spacing:3px;color:var(--red2);margin-top:4px'>⏹ ARRÊT DU COMBAT DE L\'ARBITRE</div>";
+        s+="<div style='text-align:center;font-family:var(--fh);font-size:.7rem;letter-spacing:3px;color:var(--red2);margin-top:4px'>⏹ ARRÊT ARBITRE</div>";
       } else if(isPaused){
         s+="<div style='text-align:center;font-family:var(--fh);font-size:.7rem;letter-spacing:3px;color:var(--muted);margin-top:4px'>⏸ PAUSE</div>";
       }
+    }
+    // Vainqueur publié par la table
+    if(lcd&&lcd.winner&&lcd.cid===f.id){
+      s+="<div style='text-align:center;margin-top:8px;padding:10px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:8px'>";
+      s+="<div style='font-family:var(--fm);font-size:.5rem;letter-spacing:3px;color:var(--muted);margin-bottom:4px'>VAINQUEUR</div>";
+      s+="<div style='font-size:1.8rem;margin-bottom:2px'>"+(lcd.winner.e||'🏆')+"</div>";
+      s+="<div style='font-family:var(--fh);font-size:1.2rem;letter-spacing:2px;color:var(--green)'>"+lcd.winner.nom+" "+lcd.winner.pre+"</div>";
+      s+="</div>";
     }
   }
   s+="</div></div>";
