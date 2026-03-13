@@ -2543,7 +2543,7 @@ function validateResult(){
   // Stopper le chrono local et publier le vainqueur sur Firebase
   killTimer();
   if(_fbRef){
-    try{_fbRef.child('liveStatus').set({type:'win',nom:f[pendwin].nom,pre:f[pendwin].pre,e:f[pendwin].e||'🏆',ts:Date.now()});}catch(e){}
+    try{_fbRef.child('liveStatus').set({type:'win',side:pendwin,nom:f[pendwin].nom,pre:f[pendwin].pre,e:f[pendwin].e||'🏆',ts:Date.now()});}catch(e){}
   }
   // Vérif fin de catégorie
   checkCatTermine(f.cat);
@@ -3449,39 +3449,36 @@ function fCard(f,role){
 
 /* ── Combat row générique ── */
 function fightRow(f,label){
+  var ls=window._liveStatus;
+  var lcd=window._livChronoData;
   var isLive=!f.done&&!f.locked;
   var isDone=f.done;
-  var isWait=f.locked||(!f.done&&f.locked);
-  var wA=f.winner==="a";
+  // Si liveStatus=win, forcer les cartes en win/lose sans attendre applyRemoteState
+  var wA;
+  if(ls&&ls.type==='win'){
+    wA=ls.side==='a';
+    isDone=true;
+  } else {
+    wA=f.winner==="a";
+  }
   var roleA=isDone?(wA?'win':'lose'):(isLive?'live':'wait');
   var roleB=isDone?(!wA?'win':'lose'):(isLive?'live':'wait');
-  var borderColor=isDone?'rgba(34,197,94,.3)':isLive?'rgba(200,0,10,.3)':'rgba(255,255,255,.05)';
+  var borderColor=(isDone||( ls&&ls.type==='win'))?'rgba(34,197,94,.3)':isLive?'rgba(200,0,10,.3)':'rgba(255,255,255,.05)';
   var s="<div style='border:1px solid "+borderColor+";border-radius:8px;padding:8px;margin-bottom:8px;background:rgba(0,0,0,.2)'>";
-  s+="<div style='font-family:var(--fm);font-size:.42rem;color:var(--muted);letter-spacing:1.5px;text-align:center;margin-bottom:6px'>"+label+(isLive?" <span style='color:var(--red2);animation:pulse 1s infinite'>● EN COURS</span>":isDone?" ✓":"")+"</div>";
+  s+="<div style='font-family:var(--fm);font-size:.42rem;color:var(--muted);letter-spacing:1.5px;text-align:center;margin-bottom:6px'>"+label+(isLive&&!(ls&&ls.type==='stop')?" <span style='color:var(--red2);animation:pulse 1s infinite'>● EN COURS</span>":(isDone||(ls&&ls.type==='win'))?" ✓":"")+"</div>";
   s+="<div style='display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:center'>";
   s+=fCard(f.a,roleA);
   s+="<div style='font-family:var(--fh);font-size:.75rem;color:var(--red2);text-align:center'>VS</div>";
   s+=fCard(f.b,roleB);
-  // Chrono, arrêt, vainqueur — tous depuis liveStatus + liveChrono
-  var lcd=window._livChronoData;
-  var ls=window._liveStatus;
-  // --- VAINQUEUR (priorité max — affiché même si combat terminé)
-  if(ls&&ls.type==='win'){
-    s+="<div style='text-align:center;margin-top:8px;padding:12px;background:rgba(34,197,94,.10);border:2px solid rgba(34,197,94,.5);border-radius:10px'>";
-    s+="<div style='font-family:var(--fm);font-size:.5rem;letter-spacing:3px;color:var(--muted);margin-bottom:6px'>🏆 VAINQUEUR</div>";
-    s+="<div style='font-size:2rem;margin-bottom:4px'>"+(ls.e||'🏆')+"</div>";
-    s+="<div style='font-family:var(--fh);font-size:1.3rem;letter-spacing:2px;color:#4ade80'>"+ls.nom+" "+ls.pre+"</div>";
-    s+="</div>";
-  }
   // --- ARRÊT ARBITRE
-  else if(ls&&ls.type==='stop'){
+  if(ls&&ls.type==='stop'){
     var lcdSecs=ls.secs||0;
     s+="<div style='text-align:center;margin-top:6px'>";
     s+="<div style='font-family:var(--fh);font-size:2.8rem;color:var(--red2);letter-spacing:4px'>"+fmt(lcdSecs)+"</div>";
     s+="<div style='font-family:var(--fh);font-size:.7rem;letter-spacing:3px;color:var(--red2);margin-top:4px'>⏹ ARRÊT ARBITRE</div>";
     s+="</div>";
   }
-  // --- CHRONO EN COURS (seulement si pas de liveStatus actif)
+  // --- CHRONO (running ou pause) — seulement si pas stop/win
   else if(isLive&&lcd&&lcd.running!==undefined&&(!ls||ls.type==='chrono')){
     var lcdSecs2=null;
     if(lcd.running&&lcd.ts){
