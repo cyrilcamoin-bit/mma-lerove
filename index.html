@@ -2551,7 +2551,7 @@ function sGong(){try{var c=ac();[0,.5,1].forEach(function(d){[[110,1],[220,.7],[
 
 // CHRONO
 function startChrono(){
-  var f=getFight(cid); tsecs=f.dur; twarn=false;
+  var f=FIGHTS.find(function(x){return x.id===cid;}); tsecs=f.dur; twarn=false;
   document.getElementById("tdisp").textContent=fmt(tsecs);
   document.getElementById("tdisp").className="";
   document.getElementById("tendmsg").style.display="none";
@@ -2606,7 +2606,7 @@ function backToRunning(){
 
 // PICK / CONFIRM / VALIDATE
 function renderPickBtns(){
-  var f=getFight(cid),h="";
+  var f=FIGHTS.find(function(x){return x.id===cid;}),h="";
   ["a","b"].forEach(function(s){
     h+="<div class=\"pickbtn\" id=\"pb-"+s+"\" onclick=\"selectWin('"+s+"')\">";
     h+="<div style=\"font-size:2rem;margin-bottom:5px\">"+(f[s].e||"🥋")+"</div>";
@@ -2621,7 +2621,7 @@ function selectWin(side){
   document.getElementById("pb-"+side).classList.add("on");
   document.getElementById("card-a").className="fc"+(side==="a"?" fsel":"");
   document.getElementById("card-b").className="fc"+(side==="b"?" fsel":"");
-  var w=getFight(cid)[side];
+  var w=FIGHTS.find(function(x){return x.id===cid;})[side];
   document.getElementById("cbox").innerHTML=
     "<div style=\"font-family:var(--fm);font-size:.58rem;letter-spacing:3px;color:var(--muted);margin-bottom:6px\">VAINQUEUR DÉSIGNÉ</div>"+
     "<div style=\"font-size:2.5rem;margin:8px 0\">🏆</div>"+
@@ -2631,7 +2631,7 @@ function selectWin(side){
 }
 function validateResult(){
   if(!pendwin) return;
-  var f=getFight(cid); f.done=true; f.winner=pendwin;
+  var f=FIGHTS.find(function(x){return x.id===cid;}); f.done=true; f.winner=pendwin;
   // Mettre à jour aussi pool.fights (source de vérité pour renderSuivi)
   var pool=POOLS[f.cat];
   if(pool){
@@ -2942,7 +2942,7 @@ function renderDone(f){
     "<button class=\"btn gh full\" style=\"margin-top:8px;font-size:.8rem\" onclick=\"undoResult()\">↩ Annuler ce resultat</button>";
 }
 function undoResult(){
-  var f=getFight(cid); f.done=false; f.winner=null; f.forfait=false;
+  var f=FIGHTS.find(function(x){return x.id===cid;}); f.done=false; f.winner=null; f.forfait=false;
   ["a","b"].forEach(function(s){document.getElementById("card-"+s).className="fc";document.getElementById("wb-"+s).style.display="none";document.getElementById("lb-"+s).style.display="none";});
   tsecs=f.dur; twarn=false; pendwin=null;
   document.getElementById("tdisp").textContent=fmt(f.dur);
