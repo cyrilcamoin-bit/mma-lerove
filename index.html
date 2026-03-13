@@ -863,12 +863,26 @@ function fbInit(){
         updatePublicStats();
       }
     });
-    // Sync état compétition — ignorer si pas de savedAt (= écriture liveChrono/liveStatus seule)
-    _fbRef.on('value',function(snap){
+    // Sync état compétition — listeners ciblés par sous-nœud
+    // Evite que l'écriture de liveStatus/liveChrono recharge pools avec un état périmé
+    var _pendingData = {};
+    function _mergeAndApply(key, val){
+      _pendingData[key] = val;
+      // Appliquer seulement si on a au moins pools
+      if(_pendingData.pools) applyRemoteState(_pendingData);
+    }
+    ['pools','fights','poolTables','ageCats','combattants','notifications'].forEach(function(key){
+      _fbRef.child(key).on('value',function(snap){
+        if(_fbIgnoreNext) return; // sera remis à false par le dernier listener
+        var val=snap.val(); if(val===null) return;
+        _mergeAndApply(key, val);
+      });
+    });
+    // savedAt séparé pour gérer _fbIgnoreNext
+    _fbRef.child('savedAt').on('value',function(snap){
       if(_fbIgnoreNext){_fbIgnoreNext=false;return;}
-      var data=snap.val(); if(!data) return;
-      if(!data.savedAt) return; // pas un saveState complet
-      applyRemoteState(data);
+      var val=snap.val(); if(!val) return;
+      _pendingData.savedAt=val;
     });
     // Sync chrono live — actif dès le démarrage pour tous les appareils
     _fbRef.child('liveChrono').on('value',function(snap){
