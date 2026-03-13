@@ -2485,7 +2485,10 @@ function togglePause(){
     trun=true;tiv=setInterval(tick,1000);
     btn.textContent="⏸ PAUSE";toast("▶ Repris","ok");
     // Publier la reprise sur Firebase
-    if(_fbRef&&cid!==null){try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:true,ts:Date.now()});}catch(e){}}
+    if(_fbRef&&cid!==null){
+      try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:true,ts:Date.now()});}catch(e){}
+      try{_fbRef.child('liveStatus').set({type:'chrono',ts:Date.now()});}catch(e){}
+    }
   }
 }
 function stopChrono(){
@@ -2540,7 +2543,6 @@ function validateResult(){
   // Stopper le chrono local et publier le vainqueur sur Firebase
   killTimer();
   if(_fbRef){
-    try{_fbRef.child('liveChrono').set({cid:f.id,secs:0,running:false,stopped:false,ts:Date.now()});}catch(e){}
     try{_fbRef.child('liveStatus').set({type:'win',nom:f[pendwin].nom,pre:f[pendwin].pre,e:f[pendwin].e||'🏆',ts:Date.now()});}catch(e){}
   }
   // Vérif fin de catégorie
@@ -3479,8 +3481,8 @@ function fightRow(f,label){
     s+="<div style='font-family:var(--fh);font-size:.7rem;letter-spacing:3px;color:var(--red2);margin-top:4px'>⏹ ARRÊT ARBITRE</div>";
     s+="</div>";
   }
-  // --- CHRONO EN COURS (pause ou running)
-  else if(isLive&&lcd&&lcd.running!==undefined){
+  // --- CHRONO EN COURS (seulement si pas de liveStatus actif)
+  else if(isLive&&lcd&&lcd.running!==undefined&&(!ls||ls.type==='chrono')){
     var lcdSecs2=null;
     if(lcd.running&&lcd.ts){
       var elapsed=Math.round((Date.now()-lcd.ts)/1000);
