@@ -788,6 +788,7 @@ var _fbConnected = false;
 var _fbListening = false;
 var _liveChrono = null;
 var _fbIgnoreNext = false; // évite la boucle écriture→lecture
+var _lastSaveTs = 0; // timestamp du dernier saveState local
 
 // Clé de compétition — change-la pour isoler chaque événement
 var COMP_KEY = "interclubs_18avril_v2";
@@ -888,8 +889,9 @@ function fbInit(){
 
 function applyRemoteState(data){
   try {
-    // Ne pas appliquer si chrono en cours ET qu'il y a un combat actif
-    // Mais laisser passer si c'est une mise à jour de résultat (fights.done)
+    // Ignorer données plus vieilles que notre dernier save
+    if(data.savedAt && _lastSaveTs && data.savedAt < _lastSaveTs) return;
+    // Ne pas appliquer si chrono en cours
     if(trun && window._livChronoData && window._livChronoData.running) return;
 
     var changed = false;
@@ -2551,7 +2553,7 @@ function validateResult(){
   checkCatTermine(f.cat);
 
   checkPoolDone(f.cat);
-  setTimeout(saveState, 2000); // Différé pour laisser liveStatus s'afficher
+  saveState();
   updateNotifBadge();
   var re=document.getElementById("resultats-content");
   if(re&&re.innerHTML.length>10) setTimeout(renderResultats,200);
@@ -3308,7 +3310,7 @@ function fbSave(state){
     setTimeout(function(){ fbSave(state); }, 1000);
     return;
   }
-  try{_fbIgnoreNext=true;_fbRef.set(state);}catch(e){console.warn('fbSave:',e);}
+  try{_lastSaveTs=state.savedAt||Date.now();_fbIgnoreNext=true;_fbRef.set(state);}catch(e){console.warn('fbSave:',e);}
 }
 function fbSaveInscriptions(){
   if(!_fbDb){
