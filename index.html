@@ -2490,13 +2490,9 @@ function togglePause(){
 }
 function stopChrono(){
   killTimer();
-  // Publier l'arrêt sur Firebase — chrono figé sur tous les appareils
   if(_fbRef){
-    try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:false,stopped:true,ts:Date.now()});}catch(e){}
-    var f=FIGHTS[cid];
-    try{_fbRef.child('liveStatus').set({type:'stop',nomA:f?f.a.nom+' '+f.a.pre:'',nomB:f?f.b.nom+' '+f.b.pre:'',ts:Date.now()});}catch(e){}
+    try{_fbRef.child('liveStatus').set({type:'stop',secs:tsecs,ts:Date.now()});}catch(e){}
   }
-  saveState(); // Synchro FIGHTS vers tous les appareils
   renderPickBtns();showZone("z3");toast("⏹ Arrete","warn");
 }
 function killTimer(){clearInterval(tiv);tiv=null;trun=false;}
@@ -2551,7 +2547,7 @@ function validateResult(){
   checkCatTermine(f.cat);
 
   checkPoolDone(f.cat);
-  saveState();
+  setTimeout(saveState, 2000); // Différé pour laisser liveStatus s'afficher
   updateNotifBadge();
   var re=document.getElementById("resultats-content");
   if(re&&re.innerHTML.length>10) setTimeout(renderResultats,200);
@@ -3477,7 +3473,7 @@ function fightRow(f,label){
   }
   // --- ARRÊT ARBITRE
   else if(ls&&ls.type==='stop'){
-    var lcdSecs=lcd?lcd.secs:0;
+    var lcdSecs=ls.secs||0;
     s+="<div style='text-align:center;margin-top:6px'>";
     s+="<div style='font-family:var(--fh);font-size:2.8rem;color:var(--red2);letter-spacing:4px'>"+fmt(lcdSecs)+"</div>";
     s+="<div style='font-family:var(--fh);font-size:.7rem;letter-spacing:3px;color:var(--red2);margin-top:4px'>⏹ ARRÊT ARBITRE</div>";
