@@ -852,7 +852,7 @@ function fbInit(){
         // Les inscriptions publiques sont intégrées via saveState/applyRemoteState
         // Ne pas toucher à COMBATTANTS ici
         renderInscList(); updateInscCount(); updatePublicStats();
-        if(!role){try{var sr2=localStorage.getItem('mma_session_role');if(sr2){role=sr2;if(role==='admin'){showHybridNav();var at2=$('admintabs');if(at2)at2.style.display='block';showPage('pg-admin');renderCats();updateHnavHighlight();}else{showHybridNav();switchToTable(role);}}}catch(e){}}if(role==='admin') renderInscriptions();
+        if(role==='admin') renderInscriptions();
       }
     });
     // Sync état compétition
@@ -910,17 +910,7 @@ function applyRemoteState(data){
     if(data.poolTables)  { POOL_TABLES=data.poolTables; changed=true; }
     if(data.notifications){ _notifications=data.notifications; changed=true; }
 
-  // Restaurer session après chargement Firebase
-  if(!role){
-    try{
-      var sr=localStorage.getItem('mma_session_role');
-      if(sr){
-        role=sr;
-        if(role==='admin'){showHybridNav();var at=$('admintabs');if(at)at.style.display='block';showPage('pg-admin');renderCats();updateHnavHighlight();}
-        else{showHybridNav();switchToTable(role);}
-      }
-    }catch(e){}
-  }
+  // Pas de restauration automatique — login obligatoire
     if(changed){
       // Refresh silencieux de l'UI si admin ouvert
       if(role==="admin"){
@@ -976,14 +966,14 @@ function doLogin(){
     };
     if(hex!==H[r]){var le=$('lerr');if(le)le.style.display='block';var ip=$('inp-code');if(ip){ip.value='';ip.focus();}return;}
     var le=$('lerr');if(le)le.style.display='none';
-    role=r;try{localStorage.setItem("mma_session_role",r);}catch(e){}showHybridNav();
+    role=r;showHybridNav();
     if(role==='admin'){var at=$('admintabs');if(at)at.style.display='block';showPage('pg-admin');renderCats();toast('Acces Admin','ok');}
     else switchToTable(role);
     updateHnavHighlight();
   }).catch(function(){
     var CODES={admin:'camoincyril',T1:'table1',T2:'table2',T3:'table3',T4:'table4'};
     if(code.trim().toLowerCase()!==CODES[r]){var le=$('lerr');if(le)le.style.display='block';return;}
-    role=r;try{localStorage.setItem("mma_session_role",r);}catch(e){}showHybridNav();
+    role=r;showHybridNav();
     if(role==='admin'){showPage('pg-admin');renderCats();toast('Acces Admin','ok');}else switchToTable(role);
     updateHnavHighlight();
   });
@@ -3720,15 +3710,8 @@ function deleteClub(i){if(!confirm('Supprimer '+CLUBS[i]+' ?'))return;CLUBS.spli
   if(document.readyState==='complete'){fbInit();}else{window.addEventListener('load',fbInit);}
   var hasState=loadState();
 
-  // Afficher une page immédiatement
-  var _savedRole=localStorage.getItem('mma_session_role');
-  if(_savedRole){
-    role=_savedRole;
-    if(role==='admin'){showHybridNav();var at=$('admintabs');if(at)at.style.display='block';showPage('pg-admin');renderCats();}
-    else{showHybridNav();switchToTable(role);}
-  } else {
-    showPage('pg-public');
-  }
+  // Toujours afficher pg-public au démarrage — login obligatoire
+  showPage('pg-public');
 
   updatePublicStats();
   TimerManager.set('countdown',updatePublicStats,1000);
