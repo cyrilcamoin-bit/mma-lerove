@@ -889,6 +889,9 @@ function fbInit(){
 
 function applyRemoteState(data){
   try {
+    // Ignorer si données plus vieilles que ce qu'on a déjà appliqué
+    if(data.savedAt && _lastSaveTs && data.savedAt < _lastSaveTs) return;
+    if(data.savedAt) _lastSaveTs = data.savedAt;
     // Ne pas appliquer si chrono LOCAL en cours (évite d'écraser état table)
     if(trun) return;
 
@@ -3436,11 +3439,11 @@ function fightRow(f,label){
   var isDone=f.done;
   var isLive=!isDone&&!f.locked;
   // liveStatus ne s'applique QUE si cid correspond à CE combat
-  var lsThis=ls&&(ls.cid===f.id);
+  // Comparer avec == car f.id est number mais cid Firebase peut être string
+  var lsThis=ls&&(ls.cid==f.id);
   var lsWin=lsThis&&(ls.type==='win')&&!isDone;
   var lsStop=lsThis&&(ls.type==='stop')&&!isDone;
-  // liveChrono ne s'applique QUE si cid correspond à CE combat
-  var lcdThis=lcd&&(lcd.cid===f.id);
+  var lcdThis=lcd&&(lcd.cid==f.id);
   // Calcul rôles
   var wA=isDone?(f.winner==='a'):(lsWin?(ls.side==='a'):false);
   var showDone=isDone||lsWin;
