@@ -2481,8 +2481,8 @@ function togglePause(){
 }
 function stopChrono(){
   killTimer();
-  // Publier l'arrêt sur Firebase pour que les téléphones parents voient le chrono figé
-  if(_fbRef&&cid!==null){
+  // Publier l'arrêt sur Firebase — chrono figé sur tous les appareils
+  if(_fbRef){
     try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:false,ts:Date.now()});}catch(e){}
   }
   renderPickBtns();showZone("z3");toast("⏹ Arrete","warn");
@@ -2529,6 +2529,8 @@ function validateResult(){
   toast("🏆 "+f[pendwin].nom+" — Victoire validee","ok");
   if(navigator.vibrate) navigator.vibrate([200,100,400]);
   showZone("z5"); renderDone(f); renderNext();
+  // Effacer le chrono live sur Firebase — combat terminé
+  if(_fbRef){try{_fbRef.child('liveChrono').set({cid:null,secs:0,running:false,ts:Date.now()});}catch(e){}}
   // Vérif fin de catégorie
   checkCatTermine(f.cat);
 
