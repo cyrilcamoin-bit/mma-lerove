@@ -366,8 +366,8 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
 
 <div id="pg-admin" style="display:none">
   <div class="wrap">
-    <div style="padding:12px 0 4px 0">
-      <button onclick="showPage('pg-public')" style="background:transparent;border:none;color:var(--muted);font-family:var(--fm);font-size:.6rem;letter-spacing:2px;cursor:pointer;padding:0;display:flex;align-items:center;gap:6px">← ACCUEIL</button>
+    <div style="padding:16px 0 8px 0">
+      <button onclick="showPage('pg-public')" style="background:rgba(200,0,10,.15);border:1px solid var(--red2);border-radius:8px;color:var(--text);font-family:var(--fm);font-size:.65rem;letter-spacing:2px;cursor:pointer;padding:10px 18px;display:flex;align-items:center;gap:8px">🏠 ← ACCUEIL</button>
     </div>
     <div id="tab-inscriptions">
       <div style="font-family:var(--fh);font-size:1.4rem;letter-spacing:3px;margin-bottom:4px">📝 GESTION DES INSCRITS</div>
@@ -907,12 +907,14 @@ function applyRemoteState(data){
       // Refresh silencieux de l'UI si admin ouvert
       if(role==="admin"){
         renderCats();
+        renderInscriptions();
         var le=document.getElementById("live-content");
         if(le&&le.innerHTML.length>10) renderLive();
       } else if(role){
         renderList();
       }
       updateNotifBadge();
+      updatePublicStats();
     }
   } catch(e){ console.warn("applyRemoteState:", e); }
 }
