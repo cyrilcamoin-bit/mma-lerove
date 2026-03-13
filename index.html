@@ -744,6 +744,17 @@ function loadState(){
     if(state.poolTables)    POOL_TABLES   = state.poolTables;
     if(state.notifications) _notifications = state.notifications;
 
+    // Re-synchroniser FIGHTS[] depuis pool.fights (source de vérité locked/done/a/b)
+    if(state.pools && state.fights){
+      Object.values(POOLS).forEach(function(pool){
+        if(!pool.fights) return;
+        pool.fights.forEach(function(pf){
+          var gf=FIGHTS.find(function(x){return x.id===pf.id;});
+          if(gf){ gf.a=pf.a; gf.b=pf.b; gf.locked=pf.locked; gf.done=pf.done; if(pf.winner!==undefined) gf.winner=pf.winner; }
+        });
+      });
+    }
+
     return true;
   } catch(e){ console.warn("loadState:", e); return false; }
 }
@@ -946,6 +957,21 @@ function applyRemoteState(data){
     }
     if(data.pools)       { POOLS=data.pools; changed=true; }
     if(data.fights)      { FIGHTS=data.fights; changed=true; }
+    // Re-synchroniser FIGHTS[] depuis pool.fights (source de vérité)
+    // Corrige les états locked/done/a/b qui peuvent diverger après rechargement Firebase
+    if(data.pools && data.fights){
+      Object.values(POOLS).forEach(function(pool){
+        if(!pool.fights) return;
+        pool.fights.forEach(function(pf){
+          var gf=FIGHTS.find(function(x){return x.id===pf.id;});
+          if(gf){
+            gf.a=pf.a; gf.b=pf.b;
+            gf.locked=pf.locked; gf.done=pf.done;
+            if(pf.winner!==undefined) gf.winner=pf.winner;
+          }
+        });
+      });
+    }
     if(data.poolTables)  { POOL_TABLES=data.poolTables; changed=true; }
     if(data.notifications){ _notifications=data.notifications; changed=true; }
 
@@ -2758,6 +2784,14 @@ function checkCatTermine(cat){
 }
 
 // LOGIQUE POST-COMBAT
+// Synchronise un combat de pool.fights vers FIGHTS[] (a, b, locked, done, winner)
+function syncFight(pf){
+  var gf=FIGHTS.find(function(x){return x.id===pf.id;});
+  if(!gf) return;
+  gf.a=pf.a; gf.b=pf.b;
+  gf.locked=pf.locked; gf.done=pf.done; gf.winner=pf.winner||null;
+}
+
 function postFightLogic(f){
   var pool=POOLS[f.cat]; if(!pool) return;
   // ── Nordique4 : départage si égalité pour la 1ère place ──
@@ -2779,13 +2813,11 @@ function postFightLogic(f){
         depFight.a=cloneF(sorted[0].fi);
         depFight.b=cloneF(sorted[1].fi);
         depFight.locked=false;
-        // ── Sync FIGHTS[] ──
-        var fDep=FIGHTS.find(function(x){return x.id===depFight.id;});
-        if(fDep){fDep.a=depFight.a;fDep.b=depFight.b;fDep.locked=false;}
+        syncFight(depFight);
         toast("⚖ Égalité ! Départage "+sorted[0].fi.nom+" vs "+sorted[1].fi.nom,"warn");
       } else {
         // Pas d'égalité : verrouiller le départage comme terminé
-        depFight.locked=true; depFight.done=true; depFight.winner=null;
+        depFight.locked=true; depFight.done=true; depFight.winner=null; syncFight(depFight);
       }
     }
     return;
@@ -2793,12 +2825,10 @@ function postFightLogic(f){
   if(pool.format==="aller-retour"){
     var m1=pool.fights[0],m2=pool.fights[1],m3=pool.fights[2];
     if(m1.done&&m2.done){
-      if(m1[m1.winner].id===m2[m2.winner].id){m3.locked=true;m3.done=true;m3.winner=null;toast("🏆 Vainqueur 2/2","ok");}
+      if(m1[m1.winner].id===m2[m2.winner].id){m3.locked=true;m3.done=true;m3.winner=null;syncFight(m3);toast("🏆 Vainqueur 2/2","ok");}
       else{
         m3.locked=false;
-        // ── Sync FIGHTS[] ──
-        var fM3=FIGHTS.find(function(x){return x.id===m3.id;});
-        if(fM3){fM3.a=m3.a;fM3.b=m3.b;fM3.locked=false;}
+        syncFight(m3);
         toast("⚖ Egalite 1-1 — departage !","warn");
       }
     }
@@ -2817,9 +2847,7 @@ function postFightLogic(f){
       var s1=r1done[si*2],s2=r1done[si*2+1];
       if(s1&&s2){
         sf.a=cloneF(s1[s1.winner]);sf.b=cloneF(s2[s2.winner]);sf.locked=false;
-        // ── Sync FIGHTS[] avec les vrais combattants ──
-        var fRef=FIGHTS.find(function(x){return x.id===sf.id;});
-        if(fRef){fRef.a=sf.a;fRef.b=sf.b;fRef.locked=false;}
+        syncFight(sf);
         toast("1/2 Finale "+(si+1)+" debloquee !","ok");
       }
     });
@@ -2828,13 +2856,8 @@ function postFightLogic(f){
       finale.a=cloneF(sfDone[0][sfDone[0].winner]);finale.b=cloneF(sfDone[1][sfDone[1].winner]);finale.locked=false;
       var l0=sfDone[0][sfDone[0].winner==="a"?"b":"a"],l1=sfDone[1][sfDone[1].winner==="a"?"b":"a"];
       if(petite){petite.a=cloneF(l0);petite.b=cloneF(l1);petite.locked=false;}
-      // ── Sync FIGHTS[] pour finale et petite finale ──
-      var fFin=FIGHTS.find(function(x){return x.id===finale.id;});
-      if(fFin){fFin.a=finale.a;fFin.b=finale.b;fFin.locked=false;}
-      if(petite){
-        var fPet=FIGHTS.find(function(x){return x.id===petite.id;});
-        if(fPet){fPet.a=petite.a;fPet.b=petite.b;fPet.locked=false;}
-      }
+      syncFight(finale);
+      if(petite) syncFight(petite);
       toast("🏆 FINALE debloquee !","ok");
     }
   }
