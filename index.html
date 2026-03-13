@@ -2065,48 +2065,44 @@ function buildFights(fighters,format,cat,dur,startId){
     return fs;
   }
   if(format==="elim"){
+    var phF={nom:"?",pre:"à venir",club:"",e:"❓",id:"ph"};
     var sh=F.slice().sort(function(){return Math.random()-.5;});
-    var n=sh.length;
-    var slots=1; while(slots<n) slots*=2;
-    var nRounds=Math.log2(slots);
-    // Remplir slots : combattants + null (bye)
-    var seeded=sh.slice();
-    while(seeded.length<slots) seeded.push(null);
-    // Générer tous les rounds
-    var allRounds=[]; var phF={nom:"?",pre:"à venir",club:"",e:"❓",id:"ph"};
-    var current=seeded;
-    for(var rnd=0;rnd<nRounds;rnd++){
-      var depth=nRounds-1-rnd;
-      var rType=depth===0?"elim-f":depth===1?"elim-sf":depth===2?"elim-qf":"elim-r"+depth;
-      var thisFights=[], nextCurrent=[];
-      for(var fi=0;fi<current.length;fi+=2){
-        var fa=current[fi], fb=current[fi+1];
-        if(fa===null&&fb===null){ nextCurrent.push(null); }
-        else if(fa!==null&&fb===null){ nextCurrent.push(fa); } // bye
-        else if(fa===null&&fb!==null){ nextCurrent.push(fb); } // bye
-        else {
-          var aF=fa||cloneF(phF), bF=fb||cloneF(phF);
-          var lkd=(aF.id=="ph"||bF.id=="ph");
-          var nFights=Math.max(1,slots/Math.pow(2,rnd+1));
-          var lbl=(nFights===1)?(rType==="elim-f"?"🏆 FINALE":"Finale"):(rType==="elim-sf"?"1/2 Finale ":(rType==="elim-qf"?"Quart ":(rType==="elim-f"?"Finale":"Combat ")))+(thisFights.length+1);
-          var fObj=mkF(id++,cat,dur,lbl,rType,cloneF(aF),cloneF(bF),lkd);
-          fObj._round=rnd; fObj._pos=thisFights.length;
-          thisFights.push(fObj);
-          nextCurrent.push(cloneF(phF));
-        }
+    // Générer les rounds un par un jusqu'au champion
+    // currentSlots : liste de combattants du tour en cours
+    var currentSlots=sh.slice();
+    var tourNum=0;
+    var allRoundFights=[];
+    while(currentSlots.length>1){
+      tourNum++;
+      var thisTour=[];
+      var nextSlots=[];
+      var exempt=null;
+      // Si impair : le dernier est exempt
+      if(currentSlots.length%2===1) exempt=currentSlots[currentSlots.length-1];
+      var paires=Math.floor(currentSlots.length/2);
+      for(var i=0;i<paires;i++){
+        var fa=currentSlots[i*2], fb=currentSlots[i*2+1];
+        var isLastTour=(paires===1&&!exempt);
+        var lbl=isLastTour?"🏆 FINALE":"Tour "+tourNum+" — Combat "+(i+1);
+        var typ=isLastTour?"elim-f":"elim-t"+tourNum;
+        var ff=mkF(id++,cat,dur,lbl,typ,cloneF(fa),cloneF(fb),false);
+        ff._round=tourNum-1; ff._pos=i;
+        thisTour.push(ff); fs.push(ff);
+        nextSlots.push(cloneF(phF)); // placeholder vainqueur
       }
-      if(thisFights.length>0) allRounds.push(thisFights);
-      current=nextCurrent;
+      if(exempt) nextSlots.push(cloneF(exempt)); // exempt passe directement
+      allRoundFights.push({fights:thisTour, exempt:exempt?cloneF(exempt):null});
+      currentSlots=nextSlots;
     }
-    allRounds.forEach(function(r){ r.forEach(function(fObj){ fs.push(fObj); }); });
-    // Petite finale entre les deux perdants des SF
-    var sfFights=allRounds.length>=2?allRounds[allRounds.length-2]:[];
-    if(sfFights.length>=2){
-      fs.push(mkF(id++,cat,dur,"Combat 3e place","elim-3",cloneF(phF),cloneF(phF),true));
+    // Combat 3e place si au moins un tour avec 2+ combats avant la finale
+    if(allRoundFights.length>=2){
+      var sfRound=allRoundFights[allRoundFights.length-2];
+      if(sfRound.fights.length>=2){
+        fs.push(mkF(id++,cat,dur,"Combat 3e place","elim-3",cloneF(phF),cloneF(phF),true));
+      }
     }
     return fs;
   }
-
   return fs;
 }
 
@@ -2886,67 +2882,51 @@ function postFightLogic(f){
     return;
   }
   if(pool.format==="elim"){
-    var r1fights=[],sfs=[],finale=null,petite=null;
-    pool.fights.forEach(function(ff){
-      if(ff.type==="elim-r1") r1fights.push(ff);
-      if(ff.type==="elim-sf") sfs.push(ff);
-      if(ff.type==="elim-f") finale=ff;
-      if(ff.type==="elim-3") petite=ff;
+    var allFights=pool.fights;
+    var petite=allFights.find(function(ff){return ff.type==='elim-3';});
+    // Grouper par round (_round)
+    var rounds={};
+    allFights.forEach(function(ff){
+      if(ff.type==='elim-3') return;
+      var r=ff._round!==undefined?ff._round:0;
+      if(!rounds[r]) rounds[r]=[];
+      rounds[r].push(ff);
     });
-    // Débloquer chaque SF dès que tous ses r1 dépendants sont terminés
-    sfs.forEach(function(sf,si){
-      if(!sf.locked) return;
-      var sA=sf._slotA, sB=sf._slotB;
-      // Résoudre côté A
-      var newA=null;
-      if(sA&&sA.type==='r1'){
-        var r1A=r1fights[sA.r1Idx]; if(r1A&&r1A.done) newA=cloneF(r1A[r1A.winner]);
-      } else if(sA&&sA.type==='bye'){
-        newA=sA.fighter; // déjà en sf.a depuis buildFights
-      } else if(sA&&sA.type==='ph'){
-        newA=null;
+    var rKeys=Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
+    // Pour chaque round, propager les vainqueurs vers le round suivant
+    for(var ki=0;ki<rKeys.length-1;ki++){
+      var thisR=rounds[rKeys[ki]];
+      var nextR=rounds[rKeys[ki+1]];
+      if(!nextR) continue;
+      // Chercher l'exempt éventuel de ce round (stocké dans pool si besoin)
+      // Les combats du round suivant sont en ordre : nextR[0] prend W(thisR[0]) et W(thisR[1]), etc.
+      var winnersSoFar=[];
+      thisR.forEach(function(ff){ if(ff.done) winnersSoFar.push(cloneF(ff[ff.winner])); });
+      // Aussi ajouter l'exempt si présent (dernier slot de nextR qui n'attend pas de combat)
+      // L'exempt est identifiable : combat nextR[i] avec a.id!=ph ET b.id==ph → déjà rempli à la construction
+      // On cherche les combats nextR encore locked
+      var pairIdx=0;
+      nextR.forEach(function(nf){
+        if(!nf.locked) return;
+        var wA=winnersSoFar[pairIdx*2];
+        var wB=winnersSoFar[pairIdx*2+1];
+        if(!wA||!wB) return;
+        nf.a=wA; nf.b=wB; nf.locked=false;
+        syncFight(nf);
+        toast('⚡ '+nf.lbl+' débloqué !','ok');
+        pairIdx++;
+      });
+    }
+    // Petite finale : les 2 perdants du dernier round avant la finale
+    if(petite&&petite.locked&&rKeys.length>=2){
+      var sfR=rounds[rKeys[rKeys.length-2]];
+      var sfDone=sfR?sfR.filter(function(ff){return ff.done;}):[];
+      if(sfDone.length>=2){
+        petite.a=cloneF(sfDone[0][sfDone[0].winner==='a'?'b':'a']);
+        petite.b=cloneF(sfDone[1][sfDone[1].winner==='a'?'b':'a']);
+        petite.locked=false; syncFight(petite);
+        toast('🥉 Combat 3e place débloqué !','ok');
       }
-      // Résoudre côté B
-      var newB=null;
-      if(sB&&sB.type==='r1'){
-        var r1B=r1fights[sB.r1Idx]; if(r1B&&r1B.done) newB=cloneF(r1B[r1B.winner]);
-      } else if(sB&&sB.type==='bye'){
-        newB=sB.fighter;
-      } else if(sB&&sB.type==='ph'){
-        newB=null;
-      }
-      // Fallback si pas de _slotA/_slotB (anciens combats chargés depuis Firebase)
-      // → utiliser les positions r1 par SF index
-      if(!sA&&!sB){
-        var r1A2=r1fights[si*2], r1B2=r1fights[si*2+1];
-        if(r1A2&&r1A2.done) newA=cloneF(r1A2[r1A2.winner]);
-        if(r1B2&&r1B2.done) newB=cloneF(r1B2[r1B2.winner]);
-        if((!r1A2||r1A2.done)&&(!r1B2||r1B2.done)){
-          if(newA) sf.a=newA;
-          if(newB) sf.b=newB;
-          sf.locked=false; syncFight(sf);
-          toast("1/2 Finale "+(si+1)+" debloquee !","ok");
-        }
-        return;
-      }
-      // Déverrouiller seulement si les deux côtés sont résolus
-      var aReady=(sA&&sA.type==='r1')?newA!==null:(sA&&sA.type==='bye')||true;
-      var bReady=(sB&&sB.type==='r1')?newB!==null:(sB&&sB.type==='bye')||true;
-      if(!aReady||!bReady) return;
-      if(newA) sf.a=newA;
-      if(newB) sf.b=newB;
-      sf.locked=false;
-      syncFight(sf);
-      toast("1/2 Finale "+(si+1)+" debloquee !","ok");
-    });
-    var sfDone=sfs.filter(function(sf){return sf.done;});
-    if(sfDone.length===sfs.length&&sfs.length>0&&finale&&finale.locked){
-      finale.a=cloneF(sfDone[0][sfDone[0].winner]);finale.b=cloneF(sfDone[1][sfDone[1].winner]);finale.locked=false;
-      var l0=sfDone[0][sfDone[0].winner==="a"?"b":"a"],l1=sfDone[1][sfDone[1].winner==="a"?"b":"a"];
-      if(petite){petite.a=cloneF(l0);petite.b=cloneF(l1);petite.locked=false;}
-      syncFight(finale);
-      if(petite) syncFight(petite);
-      toast("🏆 FINALE debloquee !","ok");
     }
   }
 }
@@ -3759,54 +3739,46 @@ function bracketNordique(fights,fighters){
 /* ── Format élim : tableau officiel ── */
 function bracketElim(fights,fighters){
   var petite=fights.find(function(f){return f.type==='elim-3';});
-  var finale=fights.find(function(f){return f.type==='elim-f';});
-  // Grouper par round (_round)
-  var roundMap={};
+  // Grouper par round
+  var rounds={};
   fights.forEach(function(f){
     if(f.type==='elim-3') return;
     var r=f._round!==undefined?f._round:0;
-    if(!roundMap[r]) roundMap[r]=[];
-    roundMap[r].push(f);
+    if(!rounds[r]) rounds[r]=[];
+    rounds[r].push(f);
   });
-  var roundKeys=Object.keys(roundMap).map(Number).sort(function(a,b){return a-b;});
-  var nRounds=roundKeys.length;
-  // Labels par profondeur depuis la finale (0=finale, 1=SF, 2=QF...)
-  function roundLabel(roundIdx){
-    var depth=nRounds-1-roundIdx;
-    if(depth===0) return {lbl:'🏆 FINALE', color:'var(--gold)', border:'rgba(232,184,75,.3)'};
-    if(depth===1) return {lbl:'DEMI-FINALES', color:'var(--muted)', border:'var(--border)'};
-    if(depth===2) return {lbl:'QUARTS DE FINALE', color:'var(--muted)', border:'var(--border)'};
-    if(depth===3) return {lbl:'8ES DE FINALE', color:'var(--muted)', border:'var(--border)'};
-    if(depth===4) return {lbl:'16ES DE FINALE', color:'var(--muted)', border:'var(--border)'};
-    return {lbl:(Math.pow(2,depth+1)+'ES DE FINALE'), color:'var(--muted)', border:'var(--border)'};
-  }
-  var h="<div>";
-  roundKeys.forEach(function(rKey,ri){
-    var rFights=roundMap[rKey];
-    var info=roundLabel(ri);
-    h+="<div style='font-family:var(--fm);font-size:.45rem;color:"+info.color+";letter-spacing:2px;text-align:center;padding:4px 0;margin:"+(ri>0?'12px':'0')+" 0 6px;border-bottom:1px solid "+info.border+"'>"+info.lbl+"</div>";
-    rFights.forEach(function(f,i){
-      h+=fightRow(f, rFights.length===1?'Grande Finale':(f.lbl||('Combat '+(i+1))));
-    });
-    // Encadré champion après la finale
-    if(ri===roundKeys.length-1&&finale&&finale.done){
-      var champ=finale[finale.winner];
-      h+="<div style='text-align:center;background:linear-gradient(135deg,rgba(232,184,75,.15),rgba(232,184,75,.05));border:2px solid var(--gold);border-radius:10px;padding:14px;margin-top:6px'>";
-      h+="<div style='font-size:2rem;margin-bottom:4px'>🏆</div>";
-      h+="<div style='font-family:var(--fh);font-size:1rem;color:var(--gold);letter-spacing:2px'>CHAMPION</div>";
-      h+="<div style='font-family:var(--fh);font-size:.9rem;color:#fff;margin-top:4px'>"+esc(champ.nom)+" "+esc(champ.pre)+"</div>";
-      h+="<div style='font-family:var(--fm);font-size:.5rem;color:var(--muted)'>"+esc(champ.club)+"</div></div>";
+  var rKeys=Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
+  var nRounds=rKeys.length;
+  var h='';
+  rKeys.forEach(function(rk,ri){
+    var rFights=rounds[rk];
+    var isLast=(ri===nRounds-1);
+    var title=isLast?'🏆 FINALE':'Tour '+(ri+1);
+    var titleColor=isLast?'var(--gold)':'var(--muted)';
+    var borderColor=isLast?'rgba(232,184,75,.3)':'var(--border)';
+    h+="<div style='font-family:var(--fm);font-size:.45rem;color:"+titleColor+";letter-spacing:2px;text-align:center;padding:4px 0;margin:"+(ri>0?'10px':'0')+" 0 6px;border-bottom:1px solid "+borderColor+"'>"+title+"</div>";
+    rFights.forEach(function(f,i){ h+=fightRow(f,rFights.length===1&&isLast?'Grande Finale':f.lbl); });
+    // Encadré champion
+    if(isLast){
+      var finale=rFights[0];
+      if(finale&&finale.done){
+        var champ=finale[finale.winner];
+        h+="<div style='text-align:center;background:linear-gradient(135deg,rgba(232,184,75,.15),rgba(232,184,75,.05));border:2px solid var(--gold);border-radius:10px;padding:14px;margin-top:6px'>";
+        h+="<div style='font-size:2rem;margin-bottom:4px'>🏆</div>";
+        h+="<div style='font-family:var(--fh);font-size:1rem;color:var(--gold);letter-spacing:2px'>CHAMPION</div>";
+        h+="<div style='font-family:var(--fh);font-size:.9rem;color:#fff;margin-top:4px'>"+esc(champ.nom)+" "+esc(champ.pre)+"</div>";
+        h+="<div style='font-family:var(--fm);font-size:.5rem;color:var(--muted)'>"+esc(champ.club)+"</div></div>";
+      }
     }
   });
   // Petite finale
-  if(petite){
-    var sfDone=(roundMap[roundKeys[roundKeys.length-2]]||[]).some(function(f){return f.done;});
-    if(sfDone||!roundKeys.length){
-      h+="<div style='font-family:var(--fm);font-size:.45rem;color:var(--muted);letter-spacing:2px;text-align:center;padding:4px 0;margin:12px 0 6px;border-bottom:1px solid var(--border)'>🥉 COMBAT 3e PLACE</div>";
+  if(petite&&nRounds>=2){
+    var sfDone=(rounds[rKeys[nRounds-2]]||[]).some(function(f){return f.done;});
+    if(sfDone){
+      h+="<div style='font-family:var(--fm);font-size:.45rem;color:var(--muted);letter-spacing:2px;text-align:center;padding:4px 0;margin:10px 0 6px;border-bottom:1px solid var(--border)'>🥉 COMBAT 3e PLACE</div>";
       h+=fightRow(petite,'Petite Finale');
     }
   }
-  h+="</div>";
   return h;
 }
 
