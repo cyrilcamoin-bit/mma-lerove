@@ -3050,9 +3050,11 @@ function deleteFighter(id){
   var cb = COMBATTANTS.find(function(x){return x.id===id;});
   if(!cb) return;
   if(!confirm("Supprimer "+cb.nom+" "+cb.pre+" ?")) return;
+  // Supprimer dans _inscriptions (source unique Firebase)
+  _inscriptions = _inscriptions.filter(function(x){return x.id!==id;});
   COMBATTANTS = COMBATTANTS.filter(function(x){return x.id!==id;});
   toast("🗑 "+cb.nom+" supprimé","warn");
-  saveState();
+  saveInscriptions(); // Synchronise sur tous les appareils
   renderInscriptions();
 }
 
