@@ -3325,25 +3325,6 @@ function updateFbIndicator(){
   if(_fbConnected){el.innerHTML='🟢 Firebase connecté';el.style.color='rgba(34,197,94,.8)';}
   else{el.innerHTML='🔴 Hors ligne';el.style.color='rgba(239,68,68,.8)';}
 }
-function applyRemoteState(data){
-  try{
-    if(trun) return;
-    var changed=false;
-    if(data.combattants){data.combattants.forEach(function(sc){var cb=COMBATTANTS.find(function(x){return x.id===sc.id;});if(cb&&(cb.present!==sc.present||cb.pdsP!==sc.pdsP||cb.cat!==sc.cat)){cb.present=sc.present;cb.pdsP=sc.pdsP;cb.cat=sc.cat;changed=true;}});}
-    if(data.ageCats){data.ageCats.forEach(function(sa){var ac=AGE_CATS.find(function(x){return x.id===sa.id;});if(ac&&(ac.statut!==sa.statut||ac.poulesFaites!==sa.poulesFaites)){ac.statut=sa.statut;ac.poulesFaites=sa.poulesFaites;changed=true;}});}
-    if(data.pools){POOLS=data.pools;changed=true;}
-    if(data.fights){FIGHTS=data.fights;changed=true;}
-    if(data.poolTables){POOL_TABLES=data.poolTables;changed=true;}
-    if(data.notifications){_notifications=data.notifications;changed=true;}
-    if(changed){
-      if(role==='admin'){renderCats();var le=document.getElementById('live-content');if(le&&le.innerHTML.length>10)renderLive();}
-      else if(role){renderList();}
-      updateNotifBadge();
-    }
-  }catch(e){console.warn('applyRemoteState:',e);}
-}
-
-// ── SUIVI PUBLIC ──────────────────────────────────────────────
 function showPublicSuivi(){
   showPage('pg-suivi');
   // Listener liveChrono déjà actif dès l'init Firebase
