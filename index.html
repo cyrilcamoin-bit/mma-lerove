@@ -981,14 +981,14 @@ function doLogin(){
     if(hex!==H[r]){var le=$('lerr');if(le)le.style.display='block';var ip=$('inp-code');if(ip){ip.value='';ip.focus();}return;}
     var le=$('lerr');if(le)le.style.display='none';
     role=r;
-    if(role==='admin'){var at=$('admintabs');if(at)at.style.display='block';showPage('pg-admin');renderCats();toast('Acces Admin','ok');}
+    if(role==='admin'){var at=$('admintabs');if(at)at.style.display='block';showPage('pg-admin');renderCats();renderInscriptions();setTimeout(function(){renderInscriptions();},1500);toast('Acces Admin','ok');}
     else switchToTable(role);
     
   }).catch(function(){
     var CODES={admin:'camoincyril',T1:'table1',T2:'table2',T3:'table3',T4:'table4'};
     if(code.trim().toLowerCase()!==CODES[r]){var le=$('lerr');if(le)le.style.display='block';return;}
     role=r;
-    if(role==='admin'){showPage('pg-admin');renderCats();toast('Acces Admin','ok');}else switchToTable(role);
+    if(role==='admin'){showPage('pg-admin');renderCats();renderInscriptions();setTimeout(function(){renderInscriptions();},1500);toast('Acces Admin','ok');}else switchToTable(role);
     
   });
 }
@@ -3016,19 +3016,33 @@ function saveFighter(){
   if(pds < 15 || pds > 120){ toast("⚠ Poids entre 15 et 120 kg","warn"); return; }
   if(!getAgeCat(age)){ toast("⚠ Âge hors catégorie","warn"); return; }
 
+  var ac = getAgeCat(age);
   if(_insEditId){
-    var cb = COMBATTANTS.find(function(x){return x.id===_insEditId;});
-    if(cb){ cb.nom=nom; cb.pre=pre; cb.age=age; cb.pdsD=pds; cb.club=club; cb.e=emoji; cb.g=g; cb.present=null; cb.pdsP=null; cb.cat=null; }
+    // Modifier dans _inscriptions
+    var ii = _inscriptions.findIndex(function(x){return x.id===_insEditId;});
+    if(ii>=0){
+      _inscriptions[ii].nom=nom; _inscriptions[ii].pre=pre; _inscriptions[ii].age=age;
+      _inscriptions[ii].poids=pds; _inscriptions[ii].club=club; _inscriptions[ii].g=g;
+      _inscriptions[ii].cat=ac?ac.lbl:'Hors catégorie';
+    } else {
+      // Peut être un manuel déjà dans COMBATTANTS — modifier là
+      var cb = COMBATTANTS.find(function(x){return x.id===_insEditId;});
+      if(cb){ cb.nom=nom; cb.pre=pre; cb.age=age; cb.pdsD=pds; cb.club=club; cb.e=emoji; cb.g=g; cb.cat=ac?ac.lbl:null; }
+    }
     toast("✔ "+nom+" "+pre+" modifié","ok");
   } else {
-    var newId = "c"+(Date.now());
-    COMBATTANTS.push({id:newId,nom:nom,pre:pre,age:age,pdsD:pds,club:club,e:emoji,g:g,present:null,pdsP:null,cat:null});
+    // Ajout : pousser dans _inscriptions (même nœud que formulaire public)
+    _inscriptions.push({
+      id:'ins-'+Date.now(), nom:nom, pre:pre, age:age, poids:pds, g:g, club:club,
+      tel:'', email:'', cat:ac?ac.lbl:'Hors catégorie',
+      date:new Date().toLocaleDateString('fr-FR'), statut:'admin', photo:null
+    });
     toast("+ "+nom+" "+pre+" ajouté","ok");
   }
 
   _insEditId=null;
   closeModal();
-  saveState();
+  saveInscriptions(); // Une seule source de vérité : inscriptions_interclubs_18avril_v2
   renderInscriptions();
 }
 
