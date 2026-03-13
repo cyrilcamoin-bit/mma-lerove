@@ -2143,9 +2143,10 @@ function renderGenSection(ac){
     }
     h+="</div>";
   } else {
-    // Poules générées : résumé + attribution tables
-    h+=renderPoolsSummary(ac);
+    // Poules générées : 1) Feuille présence/pesée  2) Attribution table  3) Résumé combats
+    h+=renderPeseeBody(ac);
     h+=renderAssignSection(ac);
+    h+=renderPoolsSummary(ac);
     h+="<div style='margin-top:14px;border-top:1px solid var(--border);padding-top:12px'>";
     h+="<button class='btn gh full' style='font-family:var(--fm);font-size:.6rem;color:#ef4444;border-color:#ef4444' "
       +"onclick='resetPoule(\""+ac.id+"\")'>🗑 Réinitialiser les combats de cette catégorie</button>";
@@ -2884,50 +2885,44 @@ function postFightLogic(f){
     return;
   }
   if(pool.format==="elim"){
-    // Travailler directement sur FIGHTS[] — c'est la source synchronisée
-    // pool.fights et FIGHTS[] pointent sur des objets différents après JSON
-    // On regroupe les combats de cette catégorie depuis FIGHTS[] directement
-    var catFights=FIGHTS.filter(function(ff){return ff.cat===f.cat&&ff.type!=='elim-3';});
-    var petite=FIGHTS.find(function(ff){return ff.cat===f.cat&&ff.type==='elim-3';});
-    // Grouper par _round
-    var rounds={};
-    catFights.forEach(function(ff){
-      var r=ff._round!==undefined?ff._round:0;
-      if(!rounds[r]) rounds[r]=[];
-      rounds[r].push(ff);
+    var allFights=pool.fights;
+    // Pour chaque combat locked, vérifier si ses sources sont prêtes
+    allFights.forEach(function(nf){
+      if(!nf.locked||nf.type==='elim-3') return;
+      // Résoudre côté A
+      var aOk=false, aF=null;
+      if(nf._srcA!==undefined){
+        var srcA=allFights.find(function(x){return x.id==nf._srcA;});
+        if(srcA&&srcA.done){ aOk=true; aF=cloneF(srcA[srcA.winner]); }
+      } else { aOk=true; aF=nf.a; } // déjà connu à la construction
+      if(!aOk) return;
+      // Résoudre côté B
+      var bOk=false, bF=null;
+      if(nf._exemptB){
+        // Exempt direct : combattant déjà connu
+        bOk=true; bF=nf._exemptB;
+      } else if(nf._srcB!==undefined){
+        var srcB=allFights.find(function(x){return x.id==nf._srcB;});
+        if(srcB&&srcB.done){ bOk=true; bF=cloneF(srcB[srcB.winner]); }
+      } else { bOk=true; bF=nf.b; }
+      if(!bOk) return;
+      nf.a=aF; nf.b=bF; nf.locked=false;
+      syncFight(nf);
+      toast('⚡ '+nf.lbl+' débloqué !','ok');
     });
-    var rKeys=Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
-    // Propager round par round
-    for(var ki=0;ki<rKeys.length-1;ki++){
-      var thisR=rounds[rKeys[ki]];
-      var nextR=rounds[rKeys[ki+1]];
-      if(!nextR) continue;
-      nextR.forEach(function(nf,ni){
-        if(!nf.locked) return;
-        var srcA=thisR[ni*2];
-        var srcB=thisR[ni*2+1];
-        if(!srcA||!srcA.done) return;
-        if(!srcB||!srcB.done) return;
-        nf.a=cloneF(srcA[srcA.winner]);
-        nf.b=cloneF(srcB[srcB.winner]);
-        nf.locked=false;
-        syncFight(nf);
-        toast('⚡ '+nf.lbl+' débloqué !','ok');
+    // Petite finale : perdants des 2 SF
+    var petite=allFights.find(function(ff){return ff.type==='elim-3';});
+    if(petite&&petite.locked){
+      var sfFights=allFights.filter(function(ff){
+        return ff.type!=='elim-3'&&ff.done&&ff._round===allFights.filter(function(x){return x.type==='elim-f';}).reduce(function(m,x){return x._round-1;},0);
       });
-    }
-    // Petite finale
-    if(petite&&petite.locked&&rKeys.length>=2){
-      var sfR=rounds[rKeys[rKeys.length-2]];
-      var sfDone=sfR?sfR.filter(function(ff){return ff.done;}):[];
-      if(sfDone.length>=2){
-        petite.a=cloneF(sfDone[0][sfDone[0].winner==='a'?'b':'a']);
-        petite.b=cloneF(sfDone[1][sfDone[1].winner==='a'?'b':'a']);
+      if(sfFights.length>=2){
+        petite.a=cloneF(sfFights[0][sfFights[0].winner==='a'?'b':'a']);
+        petite.b=cloneF(sfFights[1][sfFights[1].winner==='a'?'b':'a']);
         petite.locked=false; syncFight(petite);
         toast('🥉 Combat 3e place débloqué !','ok');
       }
     }
-    // Resync pool.fights depuis FIGHTS[]
-    pool.fights.forEach(function(pf){ syncFight(pf); });
   }
 }
 function renderDone(f){
