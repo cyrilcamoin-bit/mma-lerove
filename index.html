@@ -2100,11 +2100,13 @@ function buildFights(fighters,format,cat,dur,startId){
       if(ex) nxt.push(ex);
       slots=nxt;
     }
-    // Combat 3e place : si le round avant la finale a 2+ vrais combats
-    var maxR=fs.filter(function(x){return x.cat===cat;}).reduce(function(m,x){return Math.max(m,x.round_||0);},0);
-    var sfFights=fs.filter(function(x){return x.cat===cat&&x.round_===maxR-1;});
-    if(sfFights.length>=2){
-      fs.push(mkF(id++,cat,dur,"Combat 3e place","elim-3",cloneF(phF),cloneF(phF),true));
+    // Combat 3e place : toujours généré si au moins 1 tour avant la finale (≥4 combattants)
+    // Les perdants des 2 demi-finales s'affrontent (ou perdant SF + perdant T1 si exempt)
+    var finF=fs.find(function(x){return x.type==='elim-f';});
+    if(finF&&finF.round_>=1){
+      var p3=mkF(id++,cat,dur,"🥉 Combat 3e place","elim-3",cloneF(phF),cloneF(phF),true);
+      p3.round_=finF.round_; // même round que la finale
+      fs.push(p3);
     }
     return fs;
   }
@@ -2913,17 +2915,43 @@ function postFightLogic(f){
       syncFight(nf);
       toast('⚡ '+nf.lbl+' débloqué !','ok');
     });
-    // Petite finale : perdants des 2 SF
+    // Petite finale : les 2 perdants qui alimentent la finale
     var petite=allFights.find(function(ff){return ff.type==='elim-3';});
     if(petite&&petite.locked){
-      var sfFights=allFights.filter(function(ff){
-        return ff.type!=='elim-3'&&ff.done&&ff.round_===allFights.filter(function(x){return x.type==='elim-f';}).reduce(function(m,x){return x.round_-1;},0);
-      });
-      if(sfFights.length>=2){
-        petite.a=cloneF(sfFights[0][sfFights[0].winner==='a'?'b':'a']);
-        petite.b=cloneF(sfFights[1][sfFights[1].winner==='a'?'b':'a']);
-        petite.locked=false; syncFight(petite);
-        toast('🥉 Combat 3e place débloqué !','ok');
+      var finaleF=allFights.find(function(x){return x.type==='elim-f';});
+      if(finaleF&&finaleF.locked===false){
+        // La finale est débloquée : on connaît les 2 finalistes
+        // Trouver les sources de la finale (srcA_ et srcB_ ou exemptB_)
+        var losers=[];
+        // Source A de la finale
+        if(finaleF.srcA_!==undefined){
+          var sfA=allFights.find(function(x){return x.id==finaleF.srcA_;});
+          if(sfA&&sfA.done) losers.push(cloneF(sfA[sfA.winner==='a'?'b':'a']));
+        }
+        // Source B de la finale
+        if(finaleF.srcB_!==undefined){
+          var sfB=allFights.find(function(x){return x.id==finaleF.srcB_;});
+          if(sfB&&sfB.done) losers.push(cloneF(sfB[sfB.winner==='a'?'b':'a']));
+        }
+        // Collecter tous les perdants de tous les combats joués (sauf elim-3)
+        // puis exclure les 2 finalistes → les 2 derniers perdants vont en 3e place
+        if(losers.length<2){
+          var finalistIds=[finaleF.a.id, finaleF.b.id];
+          // Trier par round_ décroissant pour avoir les plus récents en premier
+          var allDone=allFights.filter(function(ff){return ff.type!=='elim-3'&&ff.done&&ff.winner;});
+          allDone.sort(function(a,b){return (b.round_||0)-(a.round_||0);});
+          allDone.forEach(function(ff){
+            var loser=ff[ff.winner==='a'?'b':'a'];
+            if(finalistIds.indexOf(loser.id)===-1&&!losers.find(function(l){return l.id===loser.id;})){
+              losers.push(cloneF(loser));
+            }
+          });
+        }
+        if(losers.length>=2){
+          petite.a=losers[0]; petite.b=losers[1];
+          petite.locked=false; syncFight(petite);
+          toast('🥉 Combat 3e place débloqué !','ok');
+        }
       }
     }
   }
