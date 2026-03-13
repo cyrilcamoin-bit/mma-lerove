@@ -1560,21 +1560,24 @@ function updateHnavHighlight(){
 }
 
 function hnav(target){
+  // Vérifier que l'utilisateur est bien authentifié pour cette destination
+  if(target==="admin" || target==="live"){
+    if(role!=="admin"){ showPage("pg-login"); return; }
+  } else {
+    if(role!==target){ showPage("pg-login"); return; }
+  }
   killTimer();
   if(target==="admin"){
-    role="admin";
     document.getElementById("admintabs").style.display="block";
     document.getElementById("tbar").style.display="none";
     showPage("pg-admin");
     aTab("inscriptions");
   } else if(target==="live"){
-    role="admin";
     document.getElementById("admintabs").style.display="block";
     document.getElementById("tbar").style.display="none";
     showPage("pg-admin");
     aTab("live");
   } else {
-    // Table T1-T4
     switchToTable(target);
   }
   updateHnavHighlight();
