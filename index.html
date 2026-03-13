@@ -2483,7 +2483,7 @@ function stopChrono(){
   killTimer();
   // Publier l'arrêt sur Firebase — chrono figé sur tous les appareils
   if(_fbRef){
-    try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:false,ts:Date.now()});}catch(e){}
+    try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:false,stopped:true,ts:Date.now()});}catch(e){}
   }
   renderPickBtns();showZone("z3");toast("⏹ Arrete","warn");
 }
@@ -3463,10 +3463,16 @@ function fightRow(f,label){
       }
     }
     if(lcdSecs!==null){
-      var isPaused=lcd&&!lcd.running;
+      var isStopped=lcd&&!lcd.running&&lcd.stopped;
+      var isPaused=lcd&&!lcd.running&&!lcd.stopped;
       s+="<div style='text-align:center;font-family:var(--fh);font-size:2.8rem;"+
-         (lcdSecs<=10?"color:var(--red2);animation:pulse .5s infinite":(isPaused?"color:var(--muted)":"color:var(--gold)"))+
-         ";letter-spacing:4px;margin-top:6px'>"+fmt(lcdSecs)+(isPaused?" <span style='font-size:1rem'>⏸</span>":"")+"</div>";
+         (lcdSecs<=10?"color:var(--red2);animation:pulse .5s infinite":(isStopped?"color:var(--red2)":(isPaused?"color:var(--muted)":"color:var(--gold)")))+
+         ";letter-spacing:4px;margin-top:6px'>"+fmt(lcdSecs)+"</div>";
+      if(isStopped){
+        s+="<div style='text-align:center;font-family:var(--fh);font-size:.7rem;letter-spacing:3px;color:var(--red2);margin-top:4px'>⏹ ARRÊT DU COMBAT DE L\'ARBITRE</div>";
+      } else if(isPaused){
+        s+="<div style='text-align:center;font-family:var(--fh);font-size:.7rem;letter-spacing:3px;color:var(--muted);margin-top:4px'>⏸ PAUSE</div>";
+      }
     }
   }
   s+="</div></div>";
