@@ -1112,10 +1112,9 @@ function switchToTable(t,skipAppel){
     showPage("pg-list");
     document.getElementById("list-content").innerHTML="<div style=\"font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:40px;line-height:2\">⏳ EN ATTENTE DES POULES<br>Contactez l'administration</div>";
   } else if(skipAppel || myPools.every(function(cat){
-    // Considérer comme "appelée" si déjà appelée OU si la poule est terminée
     if(_appelFait[cat]) return true;
     var pool=POOLS[cat];
-    return pool && pool.fights.length>0 && pool.fights.every(function(f){return f.done;});
+    return pool && pool.fights && pool.fights.length>0 && pool.fights.every(function(f){return f.done;});
   })){
     goList();
   } else {
