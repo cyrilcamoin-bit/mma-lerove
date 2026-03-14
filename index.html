@@ -2224,12 +2224,14 @@ function buildFights(fighters,format,cat,dur,startId){
   }
   if(format==="nordique4"){
     var ph4={nom:"?",pre:"Départage",club:"",e:"❓",id:"ph"};
+    // Ordre optimisé pour maximiser les repos entre les combats de chaque combattant
+    // C1vsC2, C3vsC4, C1vsC3, C2vsC4, C1vsC4, C2vsC3 → minimum de back-to-back (2 inévitables)
     fs.push(mkF(id++,cat,dur,"Combat 1","nordique",F[0],F[1],false));
-    fs.push(mkF(id++,cat,dur,"Combat 2","nordique",F[0],F[2],false));
-    fs.push(mkF(id++,cat,dur,"Combat 3","nordique",F[0],F[3],false));
-    fs.push(mkF(id++,cat,dur,"Combat 4","nordique",F[1],F[2],false));
-    fs.push(mkF(id++,cat,dur,"Combat 5","nordique",F[1],F[3],false));
-    fs.push(mkF(id++,cat,dur,"Combat 6","nordique",F[2],F[3],false));
+    fs.push(mkF(id++,cat,dur,"Combat 2","nordique",F[2],F[3],false));
+    fs.push(mkF(id++,cat,dur,"Combat 3","nordique",F[0],F[2],false));
+    fs.push(mkF(id++,cat,dur,"Combat 4","nordique",F[1],F[3],false));
+    fs.push(mkF(id++,cat,dur,"Combat 5","nordique",F[0],F[3],false));
+    fs.push(mkF(id++,cat,dur,"Combat 6","nordique",F[1],F[2],false));
     fs.push(mkF(id++,cat,dur,"⚖ Départage 1ère place","nordique-dep",ph4,ph4,true));
     return fs;
   }
