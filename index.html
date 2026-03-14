@@ -1076,7 +1076,17 @@ function doLogin(){
   var enc=new TextEncoder().encode(code.trim().toLowerCase());
   crypto.subtle.digest('SHA-256',enc).then(function(buf){
     var hex=Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-    var H=_configPasswords;
+    // Fusionner hashes par défaut + Firebase (Firebase prioritaire sauf si absent)
+    var _defaultPwd={
+      admin:'ab3f56be40c68f369f0f034547c4b24d44b62ae09176ebc2cf59701af0f58012',
+      T1:'e436cfcb49cacce38c99bb01cc78112b8c8d48c2699c64ea3ccdf32d1ac5c9c2',
+      T2:'4945d90c5c5ee4b098d17cd9a3e1a86659b90eaff6cbd5b5d99d4353f7a537e5',
+      T3:'6226439d42054f2676cee2601ad7db63ab3593ab7add59250a12f5b7ae34b284',
+      T4:'fdb17f0a2f6bddc557c155e002486da990ceff8e231ba5236618d614852591a2'
+    };
+    var H={};
+    Object.keys(_defaultPwd).forEach(function(k){ H[k]=_defaultPwd[k]; });
+    Object.keys(_configPasswords).forEach(function(k){ if(_configPasswords[k]&&_configPasswords[k].length===64) H[k]=_configPasswords[k]; });
     if(hex!==H[r]){var le=$('lerr');if(le)le.style.display='block';var ip=$('inp-code');if(ip){ip.value='';ip.focus();}return;}
     var le=$('lerr');if(le)le.style.display='none';
     role=r;
@@ -1136,6 +1146,9 @@ function renderAppelTable(){
 
   myPools.forEach(function(cat){
     var pool=POOLS[cat]; if(!pool) return;
+    // Normaliser fighters en tableau (Firebase peut retourner un objet)
+    if(pool.fighters && !Array.isArray(pool.fighters)) pool.fighters=Object.values(pool.fighters);
+    if(!pool.fighters||pool.fighters.length===0) return;
     if(!PM[cat]) PM[cat]={};
     pool.fighters.forEach(function(fi){if(PM[cat][fi.id]===undefined) PM[cat][fi.id]=null;});
     var pm=PM[cat];
@@ -1200,6 +1213,8 @@ function validerAppelTable(){
   var myPools=Object.keys(POOL_TABLES).filter(function(k){return POOL_TABLES[k]===role;});
   myPools.forEach(function(cat){
     var pool=POOLS[cat]; if(!pool) return;
+    if(pool.fighters && !Array.isArray(pool.fighters)) pool.fighters=Object.values(pool.fighters);
+    if(!pool.fighters||pool.fighters.length===0) return;
     var pm=PM[cat]||{};
     var presents=pool.fighters.filter(function(fi){return pm[fi.id]===true;});
     PD[cat]=true;
