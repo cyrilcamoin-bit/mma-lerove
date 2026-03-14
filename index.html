@@ -916,7 +916,9 @@ function fbInit(){
       window._livChronoData=snap.val();
       _liveChrono=true;
       var ps=document.getElementById('pg-suivi');
-      if(ps&&ps.style.display!=='none') renderSuivi();
+      if(ps&&ps.style.display!=='none'){
+        if(_suiviTab==='res') renderSuiviResultats(); else renderSuivi();
+      }
     });
     // Sync statut live (arrêt arbitre + vainqueur) — actif dès le démarrage
     _fbRef.child('liveStatus').on('value',function(snap){
@@ -3916,7 +3918,11 @@ function showPublicSuivi(){
   renderSuiviCatFilters(); renderSuivi();
   clearInterval(_suiviTimer);
   _suiviTimer=setInterval(function(){
-    renderSuivi();
+    if(_suiviTab==='res'){
+      renderSuiviResultats();
+    } else {
+      renderSuivi();
+    }
     var el=document.getElementById('suivi-ts');
     if(el) el.textContent=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   },1000);
