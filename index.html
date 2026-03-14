@@ -1000,9 +1000,20 @@ function applyRemoteState(data){
         var le=document.getElementById("live-content");
         if(le&&le.innerHTML.length>10) renderLive();
       } else if(role){
-        // Ne rafraîchir la liste que si on est sur pg-list (pas sur pg-fight ou pg-appel-table)
-        var pgList=document.getElementById("pg-list");
-        if(pgList&&pgList.style.display!=="none") renderList();
+        var pgList=document.getElementById('pg-list');
+        var pgAppelT=document.getElementById('pg-appel-table');
+        var onAppelTable=pgAppelT&&pgAppelT.style.display!=='none';
+        var onFight=document.getElementById('pg-fight')&&document.getElementById('pg-fight').style.display!=='none';
+        if(!onAppelTable&&!onFight){
+          // Si on était sur "EN ATTENTE DES POULES" et que Firebase vient de charger
+          // → repasser par switchToTable pour déclencher la feuille d'appel si nécessaire
+          var myPools=Object.keys(POOL_TABLES).filter(function(k){return POOL_TABLES[k]===role;});
+          if(pgList&&pgList.style.display!=='none'&&myPools.length>0&&!_appelFait[role]){
+            goAppelTable();
+          } else if(pgList&&pgList.style.display!=='none'){
+            renderList();
+          }
+        }
       }
       updateNotifBadge();
       updatePublicStats();
