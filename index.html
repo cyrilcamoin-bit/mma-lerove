@@ -1020,7 +1020,8 @@ function applyRemoteState(data){
           // Si on était sur "EN ATTENTE DES POULES" et que Firebase vient de charger
           // → repasser par switchToTable pour déclencher la feuille d'appel si nécessaire
           var myPools=Object.keys(POOL_TABLES).filter(function(k){return POOL_TABLES[k]===role;});
-          if(pgList&&pgList.style.display!=='none'&&myPools.length>0&&!_appelFait[role]){
+          var hasNewPool=myPools.some(function(cat){return !_appelFait[cat];});
+          if(pgList&&pgList.style.display!=='none'&&myPools.length>0&&hasNewPool){
             goAppelTable();
           } else if(pgList&&pgList.style.display!=='none'){
             renderList();
@@ -1102,7 +1103,7 @@ function switchToTable(t,skipAppel){
   if(myPools.length===0){
     showPage("pg-list");
     document.getElementById("list-content").innerHTML="<div style=\"font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:40px;line-height:2\">⏳ EN ATTENTE DES POULES<br>Contactez l'administration</div>";
-  } else if(skipAppel || _appelFait[t]){
+  } else if(skipAppel || myPools.every(function(cat){return _appelFait[cat];})){
     goList();
   } else {
     goAppelTable();
@@ -1118,7 +1119,11 @@ function goAppelTable(){
 
 function renderAppelTable(){
   var el=document.getElementById("appel-table-content"); if(!el) return;
-  var myPools=Object.keys(POOL_TABLES).filter(function(k){return POOL_TABLES[k]===role;});
+  var myPools=Object.keys(POOL_TABLES).filter(function(k){
+    if(POOL_TABLES[k]!==role) return false;
+    var pool=POOLS[k];
+    return pool && !pool.fights.every(function(f){return f.done;});
+  });
   if(myPools.length===0){
     el.innerHTML="<div style='font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:40px'>Aucune poule attribuée à cette table.</div>";
     return;
@@ -1219,7 +1224,8 @@ function validerAppelTable(){
       else toast("Format recalculé : "+getFmtLabel(newFmt),"ok");
     }
   });
-  _appelFait[role]=true;
+  // Marquer chaque poule comme appelée (pas la table entière)
+  myPools.forEach(function(cat){ _appelFait[cat]=true; });
   saveState();
   goList();
   toast("✅ Appel validé — bonne compétition !","ok");
