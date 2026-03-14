@@ -999,6 +999,8 @@ function applyRemoteState(data){
         renderInscriptions();
         var le=document.getElementById("live-content");
         if(le&&le.innerHTML.length>10) renderLive();
+        var tabRes=document.getElementById("tab-resultats");
+        if(tabRes&&tabRes.style.display!=="none") renderResultats();
       } else if(role){
         var pgList=document.getElementById('pg-list');
         var pgAppelT=document.getElementById('pg-appel-table');
@@ -2838,7 +2840,8 @@ function validateResult(){
   }
   updateNotifBadge();
   var re=document.getElementById("resultats-content");
-  if(re&&re.innerHTML.length>10) setTimeout(renderResultats,200);
+  var tabRes=document.getElementById("tab-resultats");
+  if(tabRes&&tabRes.style.display!=="none") setTimeout(renderResultats,200);
   var le=document.getElementById("live-content");
   if(le&&le.innerHTML.length>10) setTimeout(renderLive,200);
 }
