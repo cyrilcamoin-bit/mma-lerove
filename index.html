@@ -3915,11 +3915,22 @@ function updateFbIndicator(){
 function showPublicSuivi(){
   showPage('pg-suivi');
   // Listener liveChrono déjà actif dès l'init Firebase
-  _suiviTab='all'; _suiviCat='all';
-  _suiviTab='all'; setSuiviTab('all');
-  var filEl=document.getElementById('suivi-cat-filters'); if(filEl) filEl.style.display='flex';
-  var srEl=document.getElementById('suivi-search'); if(srEl) srEl.style.display='block';
-  renderSuiviCatFilters(); renderSuivi();
+  // Conserver l'onglet actif si déjà sur résultats, sinon 'all'
+  if(_suiviTab!=='res') _suiviTab='all';
+  _suiviCat='all';
+  setSuiviTab(_suiviTab);
+  var filEl=document.getElementById('suivi-cat-filters');
+  var srEl=document.getElementById('suivi-search');
+  if(_suiviTab==='res'){
+    if(filEl) filEl.style.display='none';
+    if(srEl) srEl.style.display='none';
+    renderSuiviCatFilters();
+    renderSuiviResultats();
+  } else {
+    if(filEl) filEl.style.display='flex';
+    if(srEl) srEl.style.display='block';
+    renderSuiviCatFilters(); renderSuivi();
+  }
   clearInterval(_suiviTimer);
   _suiviTimer=setInterval(function(){
     if(_suiviTab==='res'){
