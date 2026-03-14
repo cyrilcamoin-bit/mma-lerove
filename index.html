@@ -370,12 +370,12 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
     <div style="padding:16px 0 8px 0">
       <button onclick="showPage('pg-public')" style="background:rgba(200,0,10,.15);border:1px solid var(--red2);border-radius:8px;color:var(--text);font-family:var(--fm);font-size:.65rem;letter-spacing:2px;cursor:pointer;padding:10px 18px;display:flex;align-items:center;gap:8px">🏠 ← ACCUEIL</button>
     </div>
-    <div id="tab-inscriptions">
+    <div id="tab-inscriptions" style="display:none">
       <div style="font-family:var(--fh);font-size:1.4rem;letter-spacing:3px;margin-bottom:4px">📝 GESTION DES INSCRITS</div>
       <p style="font-family:var(--fm);font-size:.6rem;color:var(--muted);margin-bottom:16px;line-height:1.8">Ajoutez, modifiez, importez les combattants. Les modifications sont sauvegardées automatiquement.</p>
       <div id="inscriptions-content"></div>
     </div>
-    <div id="tab-cats">
+    <div id="tab-cats" style="display:none">
       <div style="font-family:var(--fh);font-size:1.4rem;letter-spacing:3px;margin-bottom:4px">📋 GESTION PAR CATÉGORIE</div>
       <p style="font-family:var(--fm);font-size:.6rem;color:var(--muted);letter-spacing:2px;margin-bottom:16px;line-height:1.8">Ouvrez la pesée catégorie par catégorie. Chaque catégorie est indépendante — vous pouvez générer ses poules dès qu'elle est prête sans attendre les autres.</p>
       <div id="cats-content"></div>
@@ -1054,14 +1054,14 @@ function doLogin(){
     if(hex!==H[r]){var le=$('lerr');if(le)le.style.display='block';var ip=$('inp-code');if(ip){ip.value='';ip.focus();}return;}
     var le=$('lerr');if(le)le.style.display='none';
     role=r;
-    if(role==='admin'){var at=$('admintabs');if(at)at.style.display='block';showPage('pg-admin');renderCats();renderInscriptions();setTimeout(function(){renderInscriptions();},1500);toast('Acces Admin','ok');}
+    if(role==='admin'){var at=$('admintabs');if(at)at.style.display='block';showPage('pg-admin');aTab('inscriptions');renderCats();setTimeout(function(){renderInscriptions();},1500);toast('Acces Admin','ok');}
     else switchToTable(role);
     
   }).catch(function(){
     var CODES={admin:'camoincyril',T1:'table1',T2:'table2',T3:'table3',T4:'table4'};
     if(code.trim().toLowerCase()!==CODES[r]){var le=$('lerr');if(le)le.style.display='block';return;}
     role=r;
-    if(role==='admin'){showPage('pg-admin');renderCats();renderInscriptions();setTimeout(function(){renderInscriptions();},1500);toast('Acces Admin','ok');}else switchToTable(role);
+    if(role==='admin'){showPage('pg-admin');aTab('inscriptions');renderCats();setTimeout(function(){renderInscriptions();},1500);toast('Acces Admin','ok');}else switchToTable(role);
     
   });
 }
