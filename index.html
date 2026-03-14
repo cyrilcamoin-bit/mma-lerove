@@ -2205,53 +2205,49 @@ function buildFights(fighters,format,cat,dur,startId){
   }
   if(format==="elim"){
     var phF={nom:"?",pre:"à venir",club:"",e:"❓",id:"ph"};
-    var sh=F.slice().sort(function(){return Math.random()-.5;});
-    var slots=sh.map(function(fi){return {type:'fighter',f:cloneF(fi)};});
-    var tN=0;
-    var exemptFighter=null; // fighter connu reporté du tour précédent (joue max 1 exempt)
+    var sh=F.slice().sort(function(){return Math.random()-.5;}); // tirage aléatoire
+    var n=sh.length;
+    // Calculer la taille du bracket (puissance de 2 >= n)
+    var p=1; while(p<n) p*=2;
+    var byes=p-n; // BYEs uniquement au T1
+    // Combattants qui se battent au T1 et ceux qui ont un BYE
+    var t1fighters=sh.slice(0,n-byes);
+    var byeFighters=sh.slice(n-byes);
+    // Construire les combats du T1
+    var t2slots=[];
+    for(var j=0;j<t1fighters.length;j+=2){
+      var fa=t1fighters[j], fb=t1fighters[j+1];
+      var ff=mkF(id++,cat,dur,"Tour 1 — Combat "+(j/2+1),"elim-t1",cloneF(fa),cloneF(fb),false);
+      ff.round_=0; ff.pos_=j/2;
+      fs.push(ff);
+      t2slots.push({type:'winner',fightId:ff.id});
+    }
+    // Les combattants BYE passent directement au T2
+    byeFighters.forEach(function(fi){
+      t2slots.push({type:'fighter',f:cloneF(fi)});
+    });
+    // Construire les tours suivants jusqu'à la finale
+    var slots=t2slots, tN=2;
     while(slots.length>1){
-      tN++;
-      // Injecter l'exempt fighter EN TÊTE des slots du nouveau tour
-      // → il sera apparié immédiatement, ne peut pas être exempt 2 tours de suite
-      if(exemptFighter){ slots.unshift(exemptFighter); exemptFighter=null; }
-      var ex=null;
-      if(slots.length%2===1){
-        var lastSlot=slots[slots.length-1];
-        if(lastSlot.type==='fighter'){
-          // Fighter connu en surnombre → reporter au tour suivant (1 seul report max)
-          exemptFighter=lastSlot;
-          slots=slots.slice(0,-1);
-        } else {
-          ex=lastSlot; // winner inconnu → exempt normal
-        }
-      }
-      var pr=Math.floor(slots.length/2);
-      var isF=(tN===1);
-      var nxt=[];
-      for(var j=0;j<pr;j++){
-        var sA=slots[j*2], sB=slots[j*2+1];
-        var lb="Tour "+tN+" — Combat "+(j+1);
-        var tp="elim-t"+tN;
+      var nxt=[], isLast=(slots.length===2);
+      for(var j=0;j<slots.length;j+=2){
+        var sA=slots[j], sB=slots[j+1];
+        var lb=isLast?"🏆 FINALE":"Tour "+tN+" — Combat "+(j/2+1);
+        var tp=isLast?"elim-f":"elim-t"+tN;
         var fA2=sA.type==='fighter'?sA.f:cloneF(phF);
         var fB2=sB.type==='fighter'?sB.f:cloneF(phF);
-        var lk=(sA.type==='winner'||sB.type==='winner')||!isF;
+        var lk=(sA.type==='winner'||sB.type==='winner');
         var ff2=mkF(id++,cat,dur,lb,tp,fA2,fB2,lk);
-        ff2.round_=tN-1; ff2.pos_=j;
+        ff2.round_=tN-1; ff2.pos_=j/2;
         if(sA.type==='winner') ff2.srcA_=sA.fightId;
         if(sB.type==='winner') ff2.srcB_=sB.fightId;
-        if(sB.type==='fighter'&&!isF) ff2.exemptB_=sB.f;
+        if(sB.type==='fighter') ff2.exemptB_=sB.f;
         fs.push(ff2);
         nxt.push({type:'winner',fightId:ff2.id});
       }
-      if(ex) nxt.push(ex);
-      slots=nxt;
+      slots=nxt; tN++;
     }
-    // Renommer le dernier combat en FINALE
-    if(fs.length>0){
-      var last=fs[fs.length-1];
-      last.lbl="🏆 FINALE"; last.type="elim-f";
-    }
-    // Combat 3e place si au moins 1 tour avant la finale
+    // Combat 3e place si demi-finales existent (bracket >= 4)
     var finF=fs.find(function(x){return x.type==='elim-f';});
     if(finF&&finF.round_>=1){
       var p3=mkF(id++,cat,dur,"🥉 Combat 3e place","elim-3",cloneF(phF),cloneF(phF),true);
@@ -2621,7 +2617,9 @@ function renderList(){
     });
   });
 
-  if(myPools.every(function(k){var p=POOLS[k]; return p&&p.fights.every(function(f){return f.done;});})){
+  var myPoolsForDone=Object.keys(POOL_TABLES).filter(function(k){return POOL_TABLES[k]===role;});
+  var poolsToCheck=myPoolsForDone.length>0?myPoolsForDone:myPools;
+  if(poolsToCheck.every(function(k){var p=POOLS[k]; return p&&p.fights.every(function(f){return f.done;});})){
     h+="<div style='text-align:center;padding:24px;color:var(--gold);font-family:var(--fh);font-size:1.5rem;letter-spacing:3px'>🏁 TOUS LES COMBATS TERMINÉS !</div>";
   }
   el.innerHTML=h;
@@ -3157,9 +3155,17 @@ function undoResult(){
   document.getElementById("tendmsg").style.display="none";
   showZone("z1"); toast("↩ Resultat annule","warn");
 }
+// Retourne uniquement les combats des poules attribuées à la table active
+function getMyFights(){
+  if(!role||role==='admin') return FIGHTS;
+  var myPools=Object.keys(POOL_TABLES).filter(function(k){return POOL_TABLES[k]===role;});
+  if(myPools.length===0) return FIGHTS;
+  return FIGHTS.filter(function(f){return myPools.indexOf(f.cat)!==-1;});
+}
+
 function renderNext(){
   var el=document.getElementById("next-wrap");
-  var next=FIGHTS.find(function(f){return !f.done&&!f.locked;});
+  var next=getMyFights().find(function(f){return !f.done&&!f.locked;});
   if(!next){
     el.innerHTML="<div style=\"text-align:center;padding:24px;color:var(--gold);font-family:var(--fh);font-size:1.5rem;letter-spacing:3px\">🏁 TOUS LES COMBATS TERMINÉS !</div><button class=\"btn gh full\" onclick=\"goList()\" style=\"margin-top:8px\">← Liste</button>";
     return;
@@ -3181,7 +3187,7 @@ function renderNext(){
 }
 function renderNRem(currentId){
   var el=document.getElementById("nrem-wrap"); if(!el) return;
-  var next=FIGHTS.find(function(f){return !f.done&&!f.locked&&f.id!==currentId;});
+  var next=getMyFights().find(function(f){return !f.done&&!f.locked&&f.id!==currentId;});
   if(!next){el.innerHTML="";return;}
   el.innerHTML="<div class=\"nrem\"><div style=\"font-family:var(--fh);font-size:.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:8px\">⚡ PROCHAIN COMBAT</div>"+
     "<div style=\"display:flex;align-items:center;gap:8px\">"+
