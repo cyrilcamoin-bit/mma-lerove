@@ -1132,7 +1132,9 @@ function renderAppelTable(){
   var myPools=Object.keys(POOL_TABLES).filter(function(k){
     if(POOL_TABLES[k]!==role) return false;
     var pool=POOLS[k];
-    return pool && !pool.fights.every(function(f){return f.done;});
+    if(!pool) return false;
+    var fights=Array.isArray(pool.fights)?pool.fights:Object.values(pool.fights||{});
+    return fights.length>0 && !fights.every(function(f){return f.done;});
   });
   if(myPools.length===0){
     el.innerHTML="<div style='font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:40px'>Aucune poule attribuée à cette table.</div>";
@@ -1179,6 +1181,8 @@ function renderAppelTable(){
   // Bouton valider
   var allPoolsChecked=myPools.every(function(cat){
     var pool=POOLS[cat]; if(!pool) return true;
+    if(pool.fighters && !Array.isArray(pool.fighters)) pool.fighters=Object.values(pool.fighters);
+    if(!pool.fighters||pool.fighters.length===0) return true;
     var pm=PM[cat]||{};
     return pool.fighters.every(function(fi){return pm[fi.id]!==null;});
   });
