@@ -1214,7 +1214,7 @@ document.getElementById("btn-back-admin").onclick=function(){backToAdmin();};
 
 // ADMIN TABS
 function aTab(tab){
-  ["inscriptions","cats","live","resultats","clubs"].forEach(function(t){
+  ["inscriptions","cats","live","resultats","clubs","config"].forEach(function(t){
     var div=document.getElementById("tab-"+t);
     if(div) div.style.display="none";
     var b=document.getElementById("tb-"+t); if(b) b.classList.remove("on");
