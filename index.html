@@ -1018,10 +1018,15 @@ function applyRemoteState(data){
         var onFight=document.getElementById('pg-fight')&&document.getElementById('pg-fight').style.display!=='none';
         // Vérifier si une nouvelle poule non appelée vient d'être attribuée
         var myPools=Object.keys(POOL_TABLES).filter(function(k){return POOL_TABLES[k]===role;});
-        var hasNewPool=myPools.some(function(cat){return !_appelFait[cat];});
-        if(hasNewPool&&myPools.length>0){
-          // Nouvelle poule détectée — déclencher l'appel quelle que soit la page courante
-          // Fermer la modale podium si elle est ouverte
+        // Nouvelle poule = assignée à cette table, non terminée, ET pas encore appelée
+        var hasNewPool=myPools.some(function(cat){
+          if(_appelFait[cat]) return false; // déjà appelée
+          var pool=POOLS[cat];
+          if(!pool) return false; // pas encore chargée
+          if(pool.fights.every(function(f){return f.done;})) return false; // déjà terminée
+          return true; // poule active non appelée
+        });
+        if(hasNewPool){
           closePodiumModal();
           goAppelTable();
         } else if(!onAppelTable&&!onFight){
@@ -1105,7 +1110,12 @@ function switchToTable(t,skipAppel){
   if(myPools.length===0){
     showPage("pg-list");
     document.getElementById("list-content").innerHTML="<div style=\"font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:40px;line-height:2\">⏳ EN ATTENTE DES POULES<br>Contactez l'administration</div>";
-  } else if(skipAppel || myPools.every(function(cat){return _appelFait[cat];})){
+  } else if(skipAppel || myPools.every(function(cat){
+    // Considérer comme "appelée" si déjà appelée OU si la poule est terminée
+    if(_appelFait[cat]) return true;
+    var pool=POOLS[cat];
+    return pool && pool.fights.length>0 && pool.fights.every(function(f){return f.done;});
+  })){
     goList();
   } else {
     goAppelTable();
