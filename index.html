@@ -917,20 +917,23 @@ function fbInit(){
       _pendingData.savedAt=val;
     });
     // Listener appel requis — déclenche goAppelTable si l'admin attribue une nouvelle poule
+    var _lastAppelTs=0;
     _fbRef.child('appelRequired').on('value',function(snap){
       var data=snap.val();
       if(!data||!role||role==='admin') return;
       var sig=data[role];
       if(!sig||!sig.ts) return;
-      // Signal récent (< 30 secondes) et pas encore traité
-      if(Date.now()-sig.ts < 30000 && !_appelFait[role]){
+      // Signal récent (< 60 secondes) et pas déjà traité ce signal précis
+      if(Date.now()-sig.ts < 60000 && sig.ts !== _lastAppelTs){
+        _lastAppelTs=sig.ts;
+        _appelFait[role]=false; // réinitialiser pour cette nouvelle poule
         closePodiumModal();
         goAppelTable();
       }
     });
     // Sync chrono live — actif dès le démarrage pour tous les appareils
     _fbRef.child('liveChrono').on('value',function(snap){
-      window._livChronoData=snap.val();
+      window._livChronoData=snap.val(); // objet {T1:{...}, T2:{...}, ...}
       _liveChrono=true;
       var ps=document.getElementById('pg-suivi');
       if(ps&&ps.style.display!=='none'){
@@ -2024,6 +2027,8 @@ function renderLive(){
   el.appendChild(btnBack);
 
   syncLiveChrono();
+  // Mettre à jour le chrono en continu côté admin
+  TimerManager.set('liveAdminChrono', syncLiveChrono, 1000);
 }
 
 function syncLiveChrono(){
@@ -2031,11 +2036,28 @@ function syncLiveChrono(){
   if(liveTab&&liveTab.style.display!=="none"){
     ['T1','T2','T3','T4'].forEach(function(t){
       var el=document.getElementById('live-chr-'+t);
-      if(el&&role===t&&trun){el.textContent=fmt(tsecs);el.style.color=tsecs<=10?'var(--red2)':'var(--gold)';}
+      if(!el) return;
+      if(role===t&&trun){
+        // Table active locale
+        el.textContent=fmt(tsecs);
+        el.style.color=tsecs<=10?'var(--red2)':'var(--gold)';
+      } else if(role==='admin'){
+        // Admin : lire le chrono Firebase par table
+        var allLcd=window._livChronoData;
+        var lcd=allLcd&&allLcd[t]?allLcd[t]:null;
+        if(lcd&&lcd.running&&lcd.ts){
+          var secs=Math.max(0,lcd.secs-Math.round((Date.now()-lcd.ts)/1000));
+          el.textContent=fmt(secs);
+          el.style.color=secs<=10?'var(--red2)':'var(--gold)';
+        } else if(lcd&&!lcd.running){
+          el.textContent=fmt(lcd.secs||0);
+          el.style.color='var(--muted)';
+        }
+      }
     });
   }
-  if(_fbRef&&cid!==null){
-    try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:trun,ts:Date.now()});}catch(e){}
+  if(_fbRef&&cid!==null&&role&&role!=='admin'){
+    try{_fbRef.child('liveChrono').child(role).set({cid:cid,secs:tsecs,running:trun,ts:Date.now()});}catch(e){}
   }
 }
 // FILTRAGE DE LA LISTE PAR TABLE
@@ -2863,7 +2885,10 @@ function startChrono(){
   document.getElementById("btnpause").textContent="⏸ PAUSE";
   trun=true; tiv=setInterval(tick,1000);
   // Nouveau combat : effacer liveStatus pour repartir propre
-  if(_fbRef){try{_fbRef.child('liveStatus').set({type:'chrono',ts:Date.now()});}catch(e){}}
+  if(_fbRef){
+    try{_fbRef.child('liveStatus').set({type:'chrono',ts:Date.now()});}catch(e){}
+    if(role&&role!=='admin') try{_fbRef.child('liveChrono').child(role).set({cid:cid,secs:tsecs,running:true,ts:Date.now()});}catch(e){}
+  }
   sStart(); if(navigator.vibrate) navigator.vibrate(300);
   showZone("z2"); renderNRem(cid);
   toast("🔔 Combat lance !","warn");
@@ -2882,13 +2907,13 @@ function togglePause(){
     clearInterval(tiv);tiv=null;trun=false;
     btn.textContent="▶ REPRENDRE";toast("⏸ Pause","warn");
     // Publier la pause sur Firebase
-    if(_fbRef&&cid!==null){try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:false,ts:Date.now()});}catch(e){}}
+    if(_fbRef&&cid!==null&&role&&role!=='admin'){try{_fbRef.child('liveChrono').child(role).set({cid:cid,secs:tsecs,running:false,ts:Date.now()});}catch(e){}}
   } else {
     trun=true;tiv=setInterval(tick,1000);
     btn.textContent="⏸ PAUSE";toast("▶ Repris","ok");
     // Publier la reprise sur Firebase
     if(_fbRef&&cid!==null){
-      try{_fbRef.child('liveChrono').set({cid:cid,secs:tsecs,running:true,ts:Date.now()});}catch(e){}
+      if(role&&role!=='admin') try{_fbRef.child('liveChrono').child(role).set({cid:cid,secs:tsecs,running:true,ts:Date.now()});}catch(e){}
     }
   }
 }
@@ -4220,7 +4245,10 @@ function fCard(f,role){
 /* ── Combat row générique ── */
 function fightRow(f,label){
   var ls=window._liveStatus;
-  var lcd=window._livChronoData;
+  // Lire le chrono de la bonne table pour ce combat
+  var _allLcd=window._livChronoData;
+  var _fTable=POOL_TABLES[f.cat]||null;
+  var lcd=_allLcd&&_fTable&&_allLcd[_fTable]?_allLcd[_fTable]:(_allLcd&&!_fTable?_allLcd:null);
   var isDone=f.done;
   var isLive=!isDone&&!f.locked;
   // liveStatus ne s'applique QUE si cid correspond à CE combat
