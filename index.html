@@ -1084,7 +1084,6 @@ function doLogin(){
   crypto.subtle.digest('SHA-256',enc).then(function(buf){
     var hex=Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
     var H=_configPasswords;
-    console.log('[doLogin] role='+r+' hex='+hex.slice(0,8)+'... stored='+( H[r]?H[r].slice(0,8)+'...':'ABSENT')+' match='+(hex===H[r]));
     if(hex!==H[r]){var le=$('lerr');if(le)le.style.display='block';var ip=$('inp-code');if(ip){ip.value='';ip.focus();}return;}
     var le=$('lerr');if(le)le.style.display='none';
     role=r;
@@ -3954,11 +3953,9 @@ function fbLoadConfig(){
   // Passwords
   _fbDb.ref('config/passwords').once('value',function(snap){
     var data=snap.val();
-    console.log('[fbLoadConfig] passwords Firebase:', data);
     if(data && typeof data==='object'){
       ['admin','T1','T2','T3','T4'].forEach(function(r){
         if(data[r] && typeof data[r]==='string' && data[r].length===64){
-          console.log('[fbLoadConfig] écrase '+r+': '+data[r].slice(0,8)+'...');
           _configPasswords[r]=data[r];
         }
       });
