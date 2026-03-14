@@ -3697,7 +3697,7 @@ function confirmImport(){
       // Pousser dans _inscriptions (même source que ajout manuel et formulaire public)
       // → saveInscriptions() synchronise Firebase → parents voient immédiatement
       _inscriptions.push({
-        id: cb.id,
+        id: 'ins-'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
         nom: cb.nom,
         pre: cb.pre,
         age: cb.age,
@@ -4166,7 +4166,19 @@ function showInscription(){
     if(!_inscOpen){banner.innerHTML="<div style='background:rgba(200,0,10,.1);border:1px solid var(--red2);border-radius:8px;padding:12px;font-family:var(--fm);font-size:.62rem;color:var(--red2);text-align:center'>🔒 Les inscriptions sont actuellement fermées.</div>";var fw=document.getElementById('insc-form-wrap');if(fw){fw.style.opacity='.4';var btn=fw.querySelector('button');if(btn)btn.disabled=true;}}
     else{banner.innerHTML="<div style='background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:8px;font-family:var(--fm);font-size:.58rem;color:var(--green);text-align:center'>✅ Inscriptions ouvertes</div>";}
   }
-  loadInscriptions(); renderInscList(); updateInscCount();
+  // Lire depuis Firebase directement (pas localStorage local)
+  if(_fbDb){
+    _fbDb.ref('inscriptions_'+COMP_KEY).once('value',function(snap){
+      var data=snap.val();
+      if(data){
+        _inscriptions=Array.isArray(data)?data:Object.values(data);
+        try{localStorage.setItem(INSC_KEY,JSON.stringify(_inscriptions));}catch(e){}
+      }
+      renderInscList(); updateInscCount();
+    });
+  } else {
+    loadInscriptions(); renderInscList(); updateInscCount();
+  }
 }
 function updateCatPreview(){
   var age=parseInt(document.getElementById('insc-age').value);
