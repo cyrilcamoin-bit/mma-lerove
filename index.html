@@ -2565,7 +2565,9 @@ function renderStandings(pool){
 
 // PODIUM & RÉSULTATS
 function computePodium(pool){
-  var fmt=pool.format,F=pool.fighters,fights=pool.fights;
+  var fmt=pool.format;
+  var F=pFighters(pool);
+  var fights=pFights(pool);
   if(fmt==="bye"||F.length===0) return [];
   if(fmt==="robin3"||fmt==="nordique4"){
     var rows=computeStandings(pool);
