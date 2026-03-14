@@ -2196,32 +2196,39 @@ function buildFights(fighters,format,cat,dur,startId){
   if(format==="elim"){
     var phF={nom:"?",pre:"à venir",club:"",e:"❓",id:"ph"};
     var sh=F.slice().sort(function(){return Math.random()-.5;});
-    // slots : {type:'fighter',f} ou {type:'winner',fightId}
     var slots=sh.map(function(fi){return {type:'fighter',f:cloneF(fi)};});
     var tN=0;
+    var exemptFighter=null; // fighter connu reporté du tour précédent (joue max 1 exempt)
     while(slots.length>1){
       tN++;
-      var nxt=[], ex=null;
-      if(slots.length%2===1) ex=slots[slots.length-1];
+      // Injecter l'exempt fighter EN TÊTE des slots du nouveau tour
+      // → il sera apparié immédiatement, ne peut pas être exempt 2 tours de suite
+      if(exemptFighter){ slots.unshift(exemptFighter); exemptFighter=null; }
+      var ex=null;
+      if(slots.length%2===1){
+        var lastSlot=slots[slots.length-1];
+        if(lastSlot.type==='fighter'){
+          // Fighter connu en surnombre → reporter au tour suivant (1 seul report max)
+          exemptFighter=lastSlot;
+          slots=slots.slice(0,-1);
+        } else {
+          ex=lastSlot; // winner inconnu → exempt normal
+        }
+      }
       var pr=Math.floor(slots.length/2);
       var isF=(tN===1);
+      var nxt=[];
       for(var j=0;j<pr;j++){
         var sA=slots[j*2], sB=slots[j*2+1];
-        var tot=pr+(ex?1:0);
-        var isL=(tot===1);
-        var lb=isL?"🏆 FINALE":"Tour "+tN+" — Combat "+(j+1);
-        var tp=isL?"elim-f":"elim-t"+tN;
-        // Résoudre les combattants connus
+        var lb="Tour "+tN+" — Combat "+(j+1);
+        var tp="elim-t"+tN;
         var fA2=sA.type==='fighter'?sA.f:cloneF(phF);
         var fB2=sB.type==='fighter'?sB.f:cloneF(phF);
-        // Verrouillé si on attend des vainqueurs, ou si ce n'est pas le tour 1
         var lk=(sA.type==='winner'||sB.type==='winner')||!isF;
         var ff2=mkF(id++,cat,dur,lb,tp,fA2,fB2,lk);
         ff2.round_=tN-1; ff2.pos_=j;
-        // Mémoriser les sources pour propagation
         if(sA.type==='winner') ff2.srcA_=sA.fightId;
         if(sB.type==='winner') ff2.srcB_=sB.fightId;
-        // Exempt connu directement en B (ex : T1 a un exempt → T2 finale connaît déjà ce combattant)
         if(sB.type==='fighter'&&!isF) ff2.exemptB_=sB.f;
         fs.push(ff2);
         nxt.push({type:'winner',fightId:ff2.id});
@@ -2229,12 +2236,16 @@ function buildFights(fighters,format,cat,dur,startId){
       if(ex) nxt.push(ex);
       slots=nxt;
     }
-    // Combat 3e place : toujours généré si au moins 1 tour avant la finale (≥4 combattants)
-    // Les perdants des 2 demi-finales s'affrontent (ou perdant SF + perdant T1 si exempt)
+    // Renommer le dernier combat en FINALE
+    if(fs.length>0){
+      var last=fs[fs.length-1];
+      last.lbl="🏆 FINALE"; last.type="elim-f";
+    }
+    // Combat 3e place si au moins 1 tour avant la finale
     var finF=fs.find(function(x){return x.type==='elim-f';});
     if(finF&&finF.round_>=1){
       var p3=mkF(id++,cat,dur,"🥉 Combat 3e place","elim-3",cloneF(phF),cloneF(phF),true);
-      p3.round_=finF.round_; // même round que la finale
+      p3.round_=finF.round_;
       fs.push(p3);
     }
     return fs;
@@ -2429,16 +2440,38 @@ function computePodium(pool){
     });
     return Object.values(sc).sort(function(a,b){return b.v-a.v;});
   }
+  // Compter les vraies V/D pour chaque combattant sur tous les combats du bracket
+  var sc2={};
+  fights.filter(function(f){return f.done&&f.winner&&f.type!=='elim-3';}).forEach(function(f){
+    var w=f[f.winner],l=f[f.winner==='a'?'b':'a'];
+    if(!sc2[w.id]) sc2[w.id]={nom:w.nom,pre:w.pre,e:w.e||'🥋',v:0,d:0};
+    if(!sc2[l.id]) sc2[l.id]={nom:l.nom,pre:l.pre,e:l.e||'🥊',v:0,d:0};
+    sc2[w.id].v++; sc2[l.id].d++;
+  });
   var finale=fights.find(function(f){return f.type==="elim-f";});
   var petite=fights.find(function(f){return f.type==="elim-3";});
   var res=[];
+  // Ordre podium : 1er (vainqueur finale), 2e (perdant finale), 3e (vainqueur petite finale)
   if(finale&&finale.done&&finale.winner){
     var w1=finale[finale.winner],l1=finale[finale.winner==="a"?"b":"a"];
-    res.push({nom:w1.nom,pre:w1.pre,e:w1.e||"🥋",v:1,d:0});
-    res.push({nom:l1.nom,pre:l1.pre,e:l1.e||"🥊",v:0,d:1});
+    var s1=sc2[w1.id]||{v:0,d:0}; var s2=sc2[l1.id]||{v:0,d:0};
+    res.push({nom:w1.nom,pre:w1.pre,e:w1.e||'🥋',v:s1.v,d:s1.d});
+    res.push({nom:l1.nom,pre:l1.pre,e:l1.e||'🥊',v:s2.v,d:s2.d});
   }
   if(petite&&petite.done&&petite.winner){
-    res.push({nom:petite[petite.winner].nom,pre:petite[petite.winner].pre,e:petite[petite.winner].e||"🥋",v:1,d:0});
+    var w3=petite[petite.winner]; var s3=sc2[w3.id]||{v:0,d:0};
+    // Ajouter la victoire de la petite finale
+    var sc3v=(s3.v||0); var sc3d=(s3.d||0);
+    // Recompter avec petite finale incluse
+    var scP={};
+    fights.filter(function(f){return f.done&&f.winner;}).forEach(function(f){
+      var w=f[f.winner],l=f[f.winner==='a'?'b':'a'];
+      if(!scP[w.id]) scP[w.id]={nom:w.nom,pre:w.pre,e:w.e||'🥋',v:0,d:0};
+      if(!scP[l.id]) scP[l.id]={nom:l.nom,pre:l.pre,e:l.e||'🥊',v:0,d:0};
+      scP[w.id].v++; scP[l.id].d++;
+    });
+    var w3s=scP[w3.id]||{v:0,d:0};
+    res.push({nom:w3.nom,pre:w3.pre,e:w3.e||'🥋',v:w3s.v,d:w3s.d});
   }
   return res;
 }
