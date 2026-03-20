@@ -1718,7 +1718,10 @@ function renderModalSolitaire(acId, idx){
     cb.className="cat-sel-btn";
     cb.id="catselbtn-"+encodePoolKey(lbl);
     var existing=state.byPoids[lbl];
-    var count=existing?existing.length:0;
+    var countBypoids=existing?existing.length:0;
+    // Chercher aussi dans les poules déjà générées (POOLS)
+    var countPools=POOLS[lbl]?pFighters(POOLS[lbl]).length:0;
+    var count=countBypoids+countPools;
     cb.innerHTML="<b>"+lbl+"</b> <span style='color:var(--muted)'>"+count+" combattant(s)</span>";
     cb.onclick=(function(targetLbl, btn){
       return function(){
@@ -1827,13 +1830,23 @@ function applyModalDecisions(acId){
       delete byPoids[cat];
       toast("❌ "+cat+" annulée","warn");
     } else if(d.action==="changer"&&d.targetCat){
-      // Déplacer le combattant
-      var ac=AGE_CATS.find(function(c){return c.id===acId;});
       fighter.cat=d.targetCat;
-      fighter.pdsP=fighter.pdsP; // poids réel inchangé, juste catégorie forcée
       if(!byPoids[d.targetCat]) byPoids[d.targetCat]=[];
       byPoids[d.targetCat].push(fighter);
       delete byPoids[cat];
+      // Si la catégorie cible existe déjà dans POOLS, y ajouter le combattant
+      // et regénérer les combats avec le nouveau format
+      if(POOLS[d.targetCat]){
+        var poolExist=POOLS[d.targetCat];
+        var newFighters=pFighters(poolExist).concat([fighter]);
+        var newFmt=getFormat(newFighters.length);
+        var newFights=buildFights(newFighters,newFmt,d.targetCat,poolExist.dur,FIGHTS.length);
+        // Retirer les anciens combats de cette pool de FIGHTS
+        FIGHTS=FIGHTS.filter(function(f){return f.cat!==d.targetCat;});
+        newFights.forEach(function(f){FIGHTS.push(f);});
+        FIGHTS.forEach(function(f,i){f.id=i;});
+        POOLS[d.targetCat]={fighters:newFighters,fights:newFights,format:newFmt,dur:poolExist.dur,acId:acId};
+      }
       toast("🔄 "+fighter.nom+" déplacé → "+d.targetCat,"ok");
     }
   });
