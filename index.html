@@ -2447,8 +2447,8 @@ function renderGenSection(ac){
     }
     h+="</div>";
   } else {
-    // Poules générées : 1) Feuille présence/pesée  2) Attribution table  3) Résumé combats
-    h+=renderPeseeBody(ac);
+    // Poules générées : Attribution table + Résumé combats
+    // (la feuille de présence n'est plus nécessaire)
     h+=renderAssignSection(ac);
     h+=renderPoolsSummary(ac);
     h+="<div style='margin-top:14px;border-top:1px solid var(--border);padding-top:12px'>";
