@@ -1547,7 +1547,8 @@ function renderAssignSection(ac){
 
 // Encoder la clé de pool pour les IDs HTML (remplacer espaces et caractères spéciaux)
 function encodePoolKey(cat){
-  return cat.replace(/[^a-zA-Z0-9]/g,"_");
+  // Préserver la distinction entre - et + en les remplaçant différemment
+  return cat.replace(/\+/g,'P').replace(/-/g,'M').replace(/[^a-zA-Z0-9]/g,'_');
 }
 
 // Appelé après el.innerHTML=h pour attacher les boutons JS dynamiques
