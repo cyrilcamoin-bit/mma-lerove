@@ -985,7 +985,7 @@ function applyRemoteState(data){
       });
     }
     if(data.pools)       { POOLS=data.pools; changed=true; }
-    if(data.fights)      { FIGHTS=data.fights; changed=true; }
+    if(data.fights){ FIGHTS=Array.isArray(data.fights)?data.fights:Object.values(data.fights); changed=true; }
     // Re-synchroniser FIGHTS[] depuis pool.fights (source de vérité)
     // Corrige les états locked/done/a/b qui peuvent diverger après rechargement Firebase
     if(data.pools && data.fights){
@@ -1420,7 +1420,7 @@ function renderCats(){
     h+="</div>";
 
     // Contenu selon statut
-    if(ac.statut==="attente"){
+    if(ac.statut==="attente"&&!catPoolsExist){
       h+="<div style=\"font-family:var(--fm);font-size:.6rem;color:var(--muted);margin-bottom:14px;line-height:1.8\">"+fighters.length+" combattant(s) inscrits dans cette catégorie d'âge.<br>Ouvrez la pesée quand vous êtes prêt à accueillir cette catégorie.</div>";
       // Liste des combattants
       if(fighters.length>0){
@@ -2446,7 +2446,9 @@ function renderGenSection(ac){
   var allCatsOk=presents.length>0&&presents.every(function(f){return f.cat&&f.cat.trim()!=="";});
   var allCalled=nonRep.length===0;
   var canGen=allCalled&&allCatsOk&&presents.length>0&&(ac.statut==="pesee"||ac.statut==="pret");
-  var hasPoules=ac.statut==="combats"||ac.statut==="termine";
+  // Vérifier aussi si des poules existent réellement dans POOLS
+  var catPoolsExist=Object.keys(POOLS).some(function(k){return getAgeCatFromCat(k)===ac.id;});
+  var hasPoules=(ac.statut==="combats"||ac.statut==="termine")||catPoolsExist;
 
   var h="";
 
@@ -2828,10 +2830,11 @@ function renderList(){
 }
 
 function goFight(id){
-  var f=FIGHTS[id];
+  // Chercher par f.id et non par index (FIGHTS peut être non contigu après Firebase sync)
+  var f=FIGHTS.find(function(x){return x.id==id;});
   if(!f){toast("Combat introuvable","err");return;}
   if(f.locked){toast("🔒 Terminez les combats precedents","warn");return;}
-  cid=id; killTimer(); pendwin=null;
+  cid=f.id; killTimer(); pendwin=null;
   renderFight(f); showPage("pg-fight");
 }
 function renderAppel(cat){
