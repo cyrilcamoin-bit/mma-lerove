@@ -1019,10 +1019,14 @@ function applyRemoteState(data){
         var onFight=document.getElementById('pg-fight')&&document.getElementById('pg-fight').style.display!=='none';
         // Vérifier si une nouvelle poule non appelée vient d'être attribuée
         var myPools=Object.keys(POOL_TABLES).filter(function(k){return POOL_TABLES[k]===role;});
-        // Si une nouvelle poule vient d'être attribuée : réinitialiser l'appel
         if(!_appelFait[role] && myPools.length>0){
+          // Nouvelle poule attribuée
           closePodiumModal();
           goAppelTable();
+        } else if(myPools.length===0){
+          // Attribution supprimée → afficher attente
+          showPage('pg-list');
+          document.getElementById('list-content').innerHTML="<div style='text-align:center;padding:40px;font-family:var(--fm);font-size:.65rem;color:var(--muted);line-height:2'>⏳ EN ATTENTE DES POULES<br>Contactez l'administration</div>";
         } else if(!onAppelTable&&!onFight){
           if(pgList&&pgList.style.display!=='none'){
             renderList();
@@ -1141,9 +1145,19 @@ function renderAppelTable(){
     // Vérifier si une poule est attribuée mais pas encore chargée depuis Firebase
     var anyAssigned=Object.keys(POOL_TABLES).some(function(k){return POOL_TABLES[k]===role;});
     if(anyAssigned){
-      el.innerHTML="<div style='text-align:center;padding:40px'><div style='font-size:2rem'>⏳</div><div style='font-family:var(--fh);font-size:.9rem;letter-spacing:2px;color:var(--gold);margin-top:12px'>CHARGEMENT...</div></div>";
-      setTimeout(function(){renderAppelTable();},800);
+      // Réessayer max 5 fois puis afficher attente
+      if(!window._appelLoadTry) window._appelLoadTry=0;
+      window._appelLoadTry++;
+      if(window._appelLoadTry<=5){
+        el.innerHTML="<div style='text-align:center;padding:40px'><div style='font-size:2rem'>⏳</div><div style='font-family:var(--fh);font-size:.9rem;letter-spacing:2px;color:var(--gold);margin-top:12px'>CHARGEMENT...</div></div>";
+        setTimeout(function(){renderAppelTable();},600);
+      } else {
+        window._appelLoadTry=0;
+        showAttente();
+      }
+      return;
     } else {
+      window._appelLoadTry=0;
       el.innerHTML="<div style='font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:40px'>Aucune poule attribuée à cette table.</div>";
     }
     return;
