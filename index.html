@@ -2199,7 +2199,9 @@ function renderPeseeBody(ac){
       ac.poids.forEach(function(p,pi){
         var lbl=p===999?"+"+ac.poids[pi-1]+"kg":"-"+p+"kg";
         var fullLbl=ac.lbl+" "+(p===999?"+"+ac.poids[pi-1]:"-"+p)+"kg";
-        var isCurrent=cb.cat===fullLbl;
+        // cb.cat peut contenir le suffixe (M)/(F) — comparer sans ce suffixe
+        var cbCatBase=cb.cat?cb.cat.replace(/ \([MF]\)$/,''):'';
+        var isCurrent=cbCatBase===fullLbl;
         var isDeclared=catD===fullLbl;
         var btnCls="catpoids-btn"+(isCurrent?" on":isDeclared&&!isCurrent?" change":"");
         h+="<button class='"+btnCls+"' onclick='setCatPoids(\""+cb.id+"\",\""+ac.id+"\","+p+")'>"+lbl+"</button>";
@@ -2296,13 +2298,14 @@ function setCatPoids(cid2,acId,pLimit){
   var ac2=AGE_CATS.find(function(x){return x.id===acId;});
   if(!ac2) return;
   var pi=ac2.poids.indexOf(pLimit);
+  if(pi===-1) return; // pLimit invalide pour cette catégorie
   var lbl=pLimit===999?"+"+ac2.poids[pi-1]+"kg":"-"+pLimit+"kg";
   var fullCat=ac2.lbl+" "+(pLimit===999?"+"+ac2.poids[pi-1]:"-"+pLimit)+"kg";
   var catDeclaree=getCatPoids(ac2,cb.pdsD);
-  // Stocker la catégorie AVEC le suffixe genre (M)/(F) pour que genPoulesCat la reconnaisse
+  // Stocker avec suffixe genre (M)/(F) pour que genPoulesCat regroupe correctement
   var genre=cb.g==="F"?"F":"M";
   cb.cat=fullCat+" ("+genre+")";
-  // Mettre à jour pdsP avec une valeur dans la bonne tranche (pdsD reste le poids déclaré original)
+  // pdsP = valeur fictive dans la bonne tranche, pdsD inchangé (poids déclaré original)
   cb.pdsP=pLimit===999?ac2.poids[pi-1]+0.1:pLimit-0.1;
   if(fullCat!==catDeclaree){
     toast("⚠ "+cb.nom+" → "+lbl+" (déclaré : "+catDeclaree+")","warn");
