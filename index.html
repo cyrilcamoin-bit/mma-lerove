@@ -2239,10 +2239,19 @@ function renderPoolsSummary(ac){
     var done=pFights(pool).filter(function(f){return f.done;}).length;
     var total=pFights(pool).length;
     var pct=total>0?Math.round(done/total*100):0;
-    h+="<div style=\"margin-bottom:10px\">";
-    h+="<div style=\"font-family:var(--fh);font-size:1rem;letter-spacing:2px;margin-bottom:4px\">"+cat+"</div>";
-    h+="<div style=\"font-family:var(--fm);font-size:.56rem;color:var(--muted);margin-bottom:4px\">"+getFmtLabel(pool.format)+" · "+done+"/"+total+" combats</div>";
-    h+="<div class=\"progbar\"><div class=\"progfill\" style=\"width:"+pct+"%\"></div></div>";
+    h+="<div style='margin-bottom:10px'>";
+    h+="<div style='font-family:var(--fh);font-size:1rem;letter-spacing:2px;margin-bottom:4px'>"+cat+"</div>";
+    h+="<div style='font-family:var(--fm);font-size:.56rem;color:var(--muted);margin-bottom:4px'>"+getFmtLabel(pool.format)+" · "+done+"/"+total+" combats</div>";
+    h+="<div class='progbar'><div class='progfill' style='width:"+pct+"%'></div></div>";
+    // Toujours afficher la liste des combattants
+    var fighters=pFighters(pool);
+    if(fighters.length>0){
+      h+="<table class='stbl' style='margin-top:6px'><thead><tr><th>#</th><th class='tl'>COMBATTANT</th><th class='tl'>CLUB</th></tr></thead><tbody>";
+      fighters.forEach(function(fi,i){
+        h+="<tr><td>"+(i+1)+"</td><td class='tl'>"+(fi.e||'🥋')+" "+fi.nom+" "+fi.pre+"</td><td class='tl' style='color:var(--muted)'>"+fi.club+"</td></tr>";
+      });
+      h+="</tbody></table>";
+    }
     if(pool.format==="robin3"||pool.format==="nordique4") h+=renderStandings(pool);
     h+="</div>";
   });
