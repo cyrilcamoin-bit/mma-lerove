@@ -734,7 +734,7 @@ function loadState(){
     if(state.combattants){
       state.combattants.forEach(function(sc){
         var cb = COMBATTANTS.find(function(x){return x.id===sc.id;});
-        if(cb){ cb.present=sc.present; cb.pdsP=sc.pdsP; cb.cat=sc.cat; }
+        if(cb){ cb.present=(sc.present===true||sc.present==='true')?true:(sc.present===false||sc.present==='false')?false:null; cb.pdsP=sc.pdsP; cb.cat=sc.cat; }
       });
     }
     // Restaurer les statuts des catégories d'âge
@@ -964,7 +964,7 @@ function applyRemoteState(data){
           club:    sc.club    || '',
           g:       sc.g       || 'M',
           e:       sc.e       || '🥋',
-          present: sc.present || null,
+          present: (sc.present===true||sc.present==='true') ? true : (sc.present===false||sc.present==='false') ? false : null,
           pdsP:    sc.pdsP    || null,
           cat:     sc.cat     || null,
           photo:   sc.photo   || null
@@ -1365,9 +1365,9 @@ function renderCats(){
   AGE_CATS.forEach(function(ac){
     var fighters=getFighters(ac.id);
     var info=statutLabel(ac.statut);
-    var present=fighters.filter(function(f){return f.present===true;}).length;
+    var present=fighters.filter(function(f){return isPresent(f);}).length;
     var absent=fighters.filter(function(f){return f.present===false;}).length;
-    var pesees=fighters.filter(function(f){return f.present===true&&f.pdsP!==null;}).length;
+    var pesees=fighters.filter(function(f){return isPresent(f)&&f.pdsP!==null;}).length;
     var totalFights=FIGHTS.filter(function(f){return POOLS[f.cat]&&getAgeCatFromCat(f.cat)===ac.id;}).length;
     var doneFights=FIGHTS.filter(function(f){return POOLS[f.cat]&&getAgeCatFromCat(f.cat)===ac.id&&f.done;}).length;
 
@@ -1483,6 +1483,10 @@ function renderCats(){
 
 // Retourne la poule actuellement active sur une table (pas terminée), ou null
 // Normalise pool.fights et pool.fighters en tableaux (Firebase retourne parfois des objets)
+// Normalise la valeur present (Firebase peut retourner string ou boolean)
+function isPresent(cb){ return cb.present===true||cb.present==='true'; }
+function isAbsent(cb){ return cb.present===false||cb.present==='false'; }
+
 function pFights(pool){
   if(!pool) return [];
   if(!pool.fights) return [];
@@ -2101,7 +2105,7 @@ function ouvrirPesee(acId){
 
 function renderPeseeBody(ac){
   var fighters=getFighters(ac.id);
-  var presents=fighters.filter(function(f){return f.present===true;});
+  var presents=fighters.filter(function(f){return isPresent(f);});
   var pesees=presents.filter(function(f){return f.pdsP!==null;});
   var nonRep=fighters.filter(function(f){return f.present===null;});
 
@@ -2150,8 +2154,8 @@ function renderPeseeBody(ac){
     var catD=ac2?getCatPoids(ac2,cb.pdsD):"?";
     var catP=cb.pdsP!==null&&ac2?getCatPoids(ac2,cb.pdsP):null;
     var change=catP&&catP!==catD;
-    var rowcls="prow"+(cb.present===true?" pres":cb.present===false?" abs":"")+(cb.pdsP!==null?" pese":"");
-    var btnPresOn=cb.present===true?"ppres":"";
+    var rowcls="prow"+(isPresent(cb)?" pres":isAbsent(cb)?" abs":"")+(cb.pdsP!==null?" pese":"");
+    var btnPresOn=isPresent(cb)?"ppres":"";
     var btnAbsOn=cb.present===false?"pabs":"";
     // Catégorie assignée manuellement lors de la pesée
     var catAssignee=cb.cat&&cb.cat.indexOf("(")!==-1?cb.cat.replace(/ \([MF]\)$/,""):null;
@@ -2184,7 +2188,7 @@ function renderPeseeBody(ac){
     if(cb.present===false){
       // Absent : cat déclarée en grisé
       h+="<span style='font-family:var(--fm);font-size:.65rem;color:var(--muted)'>"+catD+"</span>";
-    } else if(cb.present===true){
+    } else if(isPresent(cb)){
 
       h+="<div class='catpoids-grid'>";
       ac.poids.forEach(function(p,pi){
@@ -2270,7 +2274,7 @@ function setPresence(cid2,acId,val){
   if(ac){renderPeseeBody(ac);renderGenSection(ac);}
   // Mettre à jour le statut de la cat si besoin
   var fighters2=getFighters(acId);
-  var presents2=fighters2.filter(function(f){return f.present===true;});
+  var presents2=fighters2.filter(function(f){return isPresent(f);});
   var pesees2=presents2.filter(function(f){return f.pdsP!==null;});
   var nonRep2=fighters2.filter(function(f){return f.present===null;});
   if(nonRep2.length===0&&pesees2.length===presents2.length&&presents2.length>0){
@@ -2307,7 +2311,7 @@ function setCatPoids(cid2,acId,pLimit){
   renderPeseeBody(ac);
   renderGenSection(ac);
   var fighters2=getFighters(acId);
-  var presents2=fighters2.filter(function(f){return f.present===true;});
+  var presents2=fighters2.filter(function(f){return isPresent(f);});
   var pesees2=presents2.filter(function(f){return f.pdsP!==null;});
   var nonRep2=fighters2.filter(function(f){return f.present===null;});
   if(nonRep2.length===0&&pesees2.length===presents2.length&&presents2.length>0){
@@ -2414,7 +2418,7 @@ function renderGenSection(ac){
   if(!div) return;
 
   var fighters=getFighters(ac.id);
-  var presents=fighters.filter(function(f){return f.present===true;});
+  var presents=fighters.filter(function(f){return isPresent(f);});
   var nonRep=fighters.filter(function(f){return f.present===null;});
   // Tous les présents ont-ils une cat assignée ?
   var allCatsOk=presents.length>0&&presents.every(function(f){return f.cat&&f.cat.trim()!=="";});
@@ -2482,7 +2486,7 @@ function resetPoule(acId){
 function genPoulesCat(acId){
   var ac=AGE_CATS.find(function(c){return c.id===acId;});
   if(!ac) return;
-  var fighters=getFighters(acId).filter(function(c){return c.present===true&&c.pdsP!==null;});
+  var fighters=getFighters(acId).filter(function(c){return (c.present===true||c.present==='true')&&c.pdsP!==null;});
 
   var byPoids={};
   fighters.forEach(function(cb){
