@@ -386,6 +386,8 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
   </div></div>
       <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border);text-align:center">
         <button onclick="resetCompetition()" style="background:transparent;border:1px solid #3a3a3a;border-radius:6px;color:#555;cursor:pointer;font-family:var(--fm);font-size:.52rem;letter-spacing:2px;padding:6px 14px">🗑 RÉINITIALISER LA COMPÉTITION</button>
+<button onclick="resetInscriptions()" style="background:transparent;border:1px solid #3a3a3a;border-radius:6px;color:#555;cursor:pointer;font-family:var(--fm);font-size:.52rem;letter-spacing:2px;padding:6px 14px;margin-left:8px">🗑 VIDER LES INSCRITS</button>
+        <button onclick="viderInscriptions()" style="background:transparent;border:1px solid #ef4444;border-radius:6px;color:#ef4444;cursor:pointer;font-family:var(--fm);font-size:.52rem;letter-spacing:2px;padding:6px 14px;margin-top:6px">🗑 VIDER LES INSCRIPTIONS</button>
         <div id="save-indicator" style="font-family:var(--fm);font-size:.5rem;color:var(--muted);margin-top:4px;letter-spacing:1px"></div>
         <div id="fb-indicator" style="font-family:var(--fm);font-size:.5rem;margin-top:2px;letter-spacing:1px"></div>
       </div>
@@ -3601,17 +3603,42 @@ function cfgSavePassword(roleKey){
   });
 }
 
+function resetInscriptions(){
+  if(!confirm("Vider toute la liste des inscrits ? Cette action est irréversible.")) return;
+  _inscriptions=[];
+  try{ localStorage.removeItem(INSC_KEY); }catch(e){}
+  if(_fbDb){ try{ _fbDb.ref('inscriptions_'+COMP_KEY).set(null); }catch(e){} }
+  COMBATTANTS=[];
+  saveState();
+  toast("🗑 Inscrits vidés","warn");
+  renderInscriptions();
+  renderCats();
+}
+
 function resetCompetition(){
   if(!confirm("Réinitialiser toute la compétition ? Cette action est irréversible.")) return;
   clearState();
-  // Remettre les combattants à zéro
   COMBATTANTS.forEach(function(cb){cb.present=null;cb.pdsP=null;cb.cat=null;});
-  // Remettre les catégories à zéro
   AGE_CATS.forEach(function(ac){ac.statut="attente";ac.poulesFaites=false;});
   POOLS={}; FIGHTS=[]; POOL_TABLES={}; _notifications=[];
   _modalState={};
   toast("🗑 Compétition réinitialisée","warn");
   renderCats();
+}
+
+function viderInscriptions(){
+  if(!confirm("Vider TOUTES les inscriptions ? Cette action est irréversible.")) return;
+  _inscriptions=[];
+  COMBATTANTS=[];
+  // Vider localStorage
+  try{ localStorage.removeItem(INSC_KEY); }catch(e){}
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  // Vider Firebase inscriptions
+  if(_fbDb){ try{ _fbDb.ref('inscriptions_'+COMP_KEY).set(null); }catch(e){} }
+  // Vider Firebase state (combattants)
+  if(_fbRef){ try{ _fbRef.child('combattants').set(null); }catch(e){} }
+  toast("🗑 Inscriptions vidées","warn");
+  renderInscriptions();
 }
 
 function updateSaveIndicator(){
