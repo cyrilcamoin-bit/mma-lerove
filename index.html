@@ -2544,9 +2544,14 @@ function genPoulesCat(acId){
     var genre=cb.g==="F"?"F":"M";
     var cat;
     if(cb.cat&&cb.cat.indexOf("(")!==-1){
-      // Cat déjà assignée via pesée — on garde
+      // Cat déjà assignée avec suffixe genre — on garde
       cat=cb.cat;
+    } else if(cb.cat&&cb.cat.trim()!==''){
+      // Cat assignée SANS suffixe genre (ancienne version) — on l'ajoute
+      cat=cb.cat.trim()+" ("+genre+")";
+      cb.cat=cat;
     } else {
+      // Pas de cat — recalcul depuis pdsP/pdsD
       var catBase=getCatPoids(ac,cb.pdsP||cb.pdsD);
       cat=catBase+" ("+genre+")";
       cb.cat=cat;
