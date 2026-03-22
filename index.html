@@ -855,21 +855,17 @@ function fbInit(){
     firebase.database(_fbApp).ref('.info/connected').on('value',function(snap){
       _fbConnected=snap.val()===true; updateFbIndicator();
     });
-    // Sync inscriptions publiques
+    // Sync inscriptions — TOUT passe par Firebase, source unique de vérité
      _fbDb.ref('inscriptions_'+COMP_KEY).on('value',function(snap){
        var data=snap.val();
-       if(!data){
-         // Firebase vide → vider localement aussi
-         _inscriptions=[];
-         COMBATTANTS=COMBATTANTS.filter(function(cb){return cb.id&&cb.id[0]==='c';});
-         try{localStorage.removeItem(INSC_KEY);}catch(e){}
-         renderInscList(); updateInscCount(); updatePublicStats();
-         if(role==='admin') renderInscriptions();
-         return;
-       }
-       _inscriptions = Array.isArray(data) ? data : Object.values(data);
-       try{localStorage.setItem(INSC_KEY,JSON.stringify(_inscriptions));}catch(e){}
        var EMOJIS=['🥊','🥋','⚡','🔥','💪','🦊','🐯','🦁','🐺','⚔'];
+       // Que Firebase soit vide ou non, on applique immédiatement
+       if(!data || (Array.isArray(data) && data.length===0)){
+         _inscriptions=[];
+       } else {
+         _inscriptions = Array.isArray(data) ? data : Object.values(data);
+       }
+       // Reconstruire COMBATTANTS depuis Firebase — source unique
        var manuels = COMBATTANTS.filter(function(cb){return cb.id&&cb.id[0]==='c';});
        var inscrits = _inscriptions.map(function(ins,i){
          var ac=getAgeCat(ins.age);
@@ -882,6 +878,12 @@ function fbInit(){
        inscrits.forEach(function(ins){
          if(!COMBATTANTS.find(function(x){return x.id===ins.id;})) COMBATTANTS.push(ins);
        });
+       // Mettre à jour localStorage comme cache (optionnel)
+       try{
+         if(_inscriptions.length>0) localStorage.setItem(INSC_KEY,JSON.stringify(_inscriptions));
+         else localStorage.removeItem(INSC_KEY);
+       }catch(e){}
+       // Rafraîchir toutes les vues immédiatement
        renderInscList(); updateInscCount(); updatePublicStats();
        if(role==='admin') renderInscriptions();
      });
@@ -4575,7 +4577,9 @@ function bracketElim(fights,fighters){
 
 // ── INSCRIPTION ───────────────────────────────────────────────
 function loadInscriptions(){
-  try{var r=localStorage.getItem(INSC_KEY);_inscriptions=r?JSON.parse(r):[];}catch(e){_inscriptions=[];}
+  // Firebase est la source unique — on part avec liste vide, Firebase remplit via listener
+  _inscriptions=[];
+  try{localStorage.removeItem(INSC_KEY);}catch(e){}
 }
 function saveInscriptions(){
   try{localStorage.setItem(INSC_KEY,JSON.stringify(_inscriptions));}catch(e){}
