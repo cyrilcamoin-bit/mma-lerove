@@ -3754,6 +3754,7 @@ function renderInscriptions(){
   h += "</div>";
 
   // Tableau
+  h += "<div id='ins-table-wrap'>";
   if(list.length === 0){
     h += "<div style='font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:30px'>Aucun combattant trouvé</div>";
   } else {
@@ -3781,6 +3782,7 @@ function renderInscriptions(){
     h += "</tbody></table></div>";
     h += "<div style='font-family:var(--fm);font-size:.52rem;color:var(--muted);text-align:right;margin-top:6px;letter-spacing:1px'>"+list.length+" / "+total+" combattant(s)</div>";
   }
+  h += "</div>"; // ins-table-wrap
 
   el.innerHTML = h;
   updatePublicStats();
@@ -3793,7 +3795,43 @@ function renderInscriptions(){
 
 function insOnSearch(val){
   _insSearch = val;
-  renderInscriptions();
+  // Mettre à jour uniquement le tableau, pas toute la page
+  var el=document.getElementById('inscriptions-content');
+  if(!el){ renderInscriptions(); return; }
+  // Reconstruire seulement la partie tableau
+  var list=COMBATTANTS.filter(function(cb){
+    var q=val.toLowerCase();
+    return !q||(cb.nom+' '+cb.pre+' '+cb.club).toLowerCase().indexOf(q)!==-1;
+  });
+  var tableWrap=document.getElementById('ins-table-wrap');
+  if(!tableWrap){ renderInscriptions(); return; }
+  var total=COMBATTANTS.length;
+  if(list.length===0){
+    tableWrap.innerHTML="<div style='font-family:var(--fm);font-size:.65rem;color:var(--muted);text-align:center;padding:30px'>Aucun combattant trouvé</div>";
+  } else {
+    var h="<div style='overflow-x:auto'><table class='ins-table'>";
+    h+="<thead><tr><th></th><th>NOM</th><th>ÂGE</th><th>CATÉGORIE</th><th>POIDS DÉC.</th><th>CLUB</th><th>GENRE</th><th></th></tr></thead><tbody>";
+    list.forEach(function(cb){
+      var ac=getAgeCat(cb.age);
+      h+="<tr>";
+      h+="<td style='font-size:1.1rem'>"+cb.e+"</td>";
+      var cbThumb=(cb.photo&&cb.photo.indexOf('data:')===0)?"<img src='"+cb.photo+"' style='width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);margin-right:6px;vertical-align:middle'>":"<span style='display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--dark3);text-align:center;line-height:28px;font-size:.7rem;margin-right:6px;vertical-align:middle'>👤</span>";
+      h+="<td>"+cbThumb+"<b style='font-family:var(--fh);letter-spacing:1px'>"+cb.nom+"</b> "+cb.pre+"</td>";
+      h+="<td>"+cb.age+" ans</td>";
+      h+="<td><span class='ins-cat-badge'>"+(ac?ac.lbl:"Hors cat.")+"</span></td>";
+      h+="<td style='color:var(--gold)'>"+cb.pdsD+" kg</td>";
+      h+="<td style='color:var(--muted)'>"+cb.club+"</td>";
+      h+="<td><span class='ins-genre-"+(cb.g==="M"?"m":"f")+"'>"+(cb.g==="M"?"♂ M":"♀ F")+"</span></td>";
+      h+="<td><div class='ins-actions'>";
+      h+="<button class='ins-btn-edit' onclick='openFighterModal(\""+cb.id+"\")'>✏</button>";
+      h+="<button class='ins-btn-del' onclick='deleteFighter(\""+cb.id+"\")'>✕</button>";
+      h+="</div></td>";
+      h+="</tr>";
+    });
+    h+="</tbody></table></div>";
+    h+="<div style='font-family:var(--fm);font-size:.52rem;color:var(--muted);text-align:right;margin-top:6px;letter-spacing:1px'>"+list.length+" / "+total+" combattant(s)</div>";
+    tableWrap.innerHTML=h;
+  }
 }
 
 function insSetFilter(val){
