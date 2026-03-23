@@ -3784,6 +3784,11 @@ function renderInscriptions(){
 
   el.innerHTML = h;
   updatePublicStats();
+  // Restaurer le focus sur la barre de recherche si une recherche est en cours
+  if(_insSearch){
+    var inp=document.getElementById('ins-search-input');
+    if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  }
 }
 
 function insOnSearch(val){
