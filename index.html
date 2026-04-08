@@ -1525,8 +1525,10 @@ function renderCats(){
       h+="</div>";
     }
 
-    if(statutEffectif==="pesee"||statutEffectif==="pret"){
+    if((statutEffectif==="pesee"||statutEffectif==="pret")&&!_catHasPools){
       h+="<div id='par-"+ac.id+"'></div>";
+      h+="<div id='gen-sec-"+ac.id+"'></div>";
+    } else if(statutEffectif==="pesee"||statutEffectif==="pret"){
       h+="<div id='gen-sec-"+ac.id+"'></div>";
     }
 
@@ -1558,10 +1560,10 @@ function renderCats(){
     var sEff=ac.statut;
     if(catHasP&&sEff==='attente') sEff='combats';
     if(allDoneP) sEff='termine';
-    if(sEff==="pesee"||sEff==="pret"){
+    if((sEff==="pesee"||sEff==="pret")&&!catHasP){
       renderPeseeBody(ac);
       renderGenSection(ac);
-    } else if(sEff==="combats"||sEff==="termine"){
+    } else if(sEff==="combats"||sEff==="termine"||catHasP){
       renderGenSection(ac);
     }
   });
@@ -1790,10 +1792,9 @@ function renderModalSolitaire(acId, idx){
     var cb=document.createElement("button");
     cb.className="cat-sel-btn";
     cb.id="catselbtn-"+encodePoolKey(lbl);
-    var existing=state.byPoids[lbl];
-    var countBypoids=existing?existing.length:0;
-    // Chercher aussi dans les poules déjà générées (POOLS)
-    var countPools=POOLS[lbl]?pFighters(POOLS[lbl]).length:0;
+    // Compter toutes variantes (M)/(F) du label de base
+    var countBypoids=Object.keys(state.byPoids).filter(function(k){return k===lbl||k===lbl+' (M)'||k===lbl+' (F)';}).reduce(function(sum,k){return sum+(state.byPoids[k]?state.byPoids[k].length:0);},0);
+    var countPools=Object.keys(POOLS).filter(function(k){return k===lbl||k===lbl+' (M)'||k===lbl+' (F)';}).reduce(function(sum,k){return sum+pFighters(POOLS[k]).length;},0);
     var count=countBypoids+countPools;
     cb.innerHTML="<b>"+lbl+"</b> <span style='color:var(--muted)'>"+count+" combattant(s)</span>";
     cb.onclick=(function(targetLbl, btn){
@@ -1812,6 +1813,42 @@ function renderModalSolitaire(acId, idx){
     })(lbl, cb);
     catGrid.appendChild(cb);
   });
+  // Feature : si solitaire est F, proposer aussi les catégories garçons (combat mixte)
+  var genreOpp=f.g==='F'?'M':'F';
+  var libelleOpp=f.g==='F'?'avec les garçons ⚔':'avec les filles ⚔';
+  var hasOppCats=false;
+  ac.poids.forEach(function(p,i){
+    var lbl2=ac.lbl+' '+(p===999?'+'+ac.poids[i-1]:'-'+p)+'kg';
+    var lbl2Full=lbl2+' ('+genreOpp+')';
+    // Vérifier que cette catégorie genre opposé a des combattants
+    var hasOpp=(state.byPoids[lbl2Full]&&state.byPoids[lbl2Full].length>0)||(POOLS[lbl2Full]&&pFighters(POOLS[lbl2Full]).length>0);
+    if(!hasOpp) return;
+    // Ne pas proposer si c'est la propre catégorie du solitaire
+    if(lbl2+' ('+f.g+')'===sol.cat) return;
+    hasOppCats=true;
+    var cb2=document.createElement('button');
+    cb2.className='cat-sel-btn cat-sel-opp';
+    cb2.style.cssText='border-color:rgba(200,0,10,.4);background:rgba(200,0,10,.06)';
+    var cntOpp=(state.byPoids[lbl2Full]?state.byPoids[lbl2Full].length:0)+(POOLS[lbl2Full]?pFighters(POOLS[lbl2Full]).length:0);
+    cb2.innerHTML='<b>'+lbl2+'</b> <span style="color:var(--red2);font-size:.45rem">'+libelleOpp+'</span> <span style="color:var(--muted)">'+cntOpp+' combattant(s)</span>';
+    cb2.onclick=(function(targetLbl2,btn2){
+      return function(){
+        _modalState[acId].decisions[sol.cat]={action:'changer',targetCat:targetLbl2};
+        catGrid.querySelectorAll('.cat-sel-btn').forEach(function(b){b.classList.remove('on');});
+        btn2.classList.add('on');
+        btnNext.disabled=false;
+        opt1.classList.add('selected');
+        opt2.classList.remove('selected');
+      };
+    })(lbl2Full,cb2);
+    catGrid.appendChild(cb2);
+  });
+  if(hasOppCats){
+    var sep2=document.createElement('div');
+    sep2.style.cssText='font-family:var(--fm);font-size:.45rem;color:var(--muted);letter-spacing:1px;margin:6px 0 2px;text-align:center';
+    sep2.textContent='── Combat mixte ──';
+    catGrid.insertBefore(sep2,catGrid.children[catGrid.children.length-hasOppCats ? 0 : 0]);
+  }
   opt1.appendChild(catGrid);
 
   opt1.onclick=function(e){
@@ -1903,9 +1940,23 @@ function applyModalDecisions(acId){
       delete byPoids[cat];
       toast("❌ "+cat+" annulée","warn");
     } else if(d.action==="changer"&&d.targetCat){
-      fighter.cat=d.targetCat;
-      if(!byPoids[d.targetCat]) byPoids[d.targetCat]=[];
-      byPoids[d.targetCat].push(fighter);
+      // Résoudre la vraie clé byPoids (avec suffixe genre possible)
+      var resolvedKey=d.targetCat;
+      if(!byPoids[resolvedKey]&&!POOLS[resolvedKey]){
+        // d.targetCat peut être déjà la clé complète (genre opposé) ou juste le label de base
+        // Si c'est déjà une clé exacte dans byPoids (ex: "Minime -40kg (M)") → OK
+        // Sinon chercher avec suffixe genre du combattant
+        var gSuf=' ('+(fighter.g||'M')+')';
+        var gOpp=' ('+(fighter.g==='F'?'M':'F')+')';
+        if(byPoids[d.targetCat+gSuf]) resolvedKey=d.targetCat+gSuf;
+        else if(POOLS[d.targetCat+gSuf]) resolvedKey=d.targetCat+gSuf;
+        else if(byPoids[d.targetCat+gOpp]) resolvedKey=d.targetCat+gOpp;
+        else if(POOLS[d.targetCat+gOpp]) resolvedKey=d.targetCat+gOpp;
+        else resolvedKey=d.targetCat+gSuf; // créer nouvelle entrée avec même genre
+      }
+      fighter.cat=resolvedKey;
+      if(!byPoids[resolvedKey]) byPoids[resolvedKey]=[];
+      byPoids[resolvedKey].push(fighter);
       delete byPoids[cat];
       // Si la catégorie cible existe déjà dans POOLS, y ajouter le combattant
       // et regénérer les combats avec le nouveau format
