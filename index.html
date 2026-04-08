@@ -3071,6 +3071,11 @@ function backToRunning(){
   document.getElementById("card-b").className="fc";
   trun=true;tiv=setInterval(tick,1000);
   document.getElementById("btnpause").textContent="⏸ PAUSE";
+  // Publier la reprise sur Firebase — efface le signal stop et relance le chrono parents
+  if(_fbRef&&cid!==null&&role&&role!=='admin'){
+    try{_fbRef.child('liveStatus').set({type:'chrono',ts:Date.now()});}catch(e){}
+    try{_fbRef.child('liveChrono').child(role).set({cid:cid,secs:tsecs,running:true,ts:Date.now()});}catch(e){}
+  }
   showZone("z2"); renderNRem(cid); toast("▶ Repris","ok");
 }
 
