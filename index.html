@@ -581,7 +581,7 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
   <div style="max-width:520px;margin:0 auto;padding:16px">
     <div id="insc-statut-banner" style="margin-bottom:12px"></div>
     <div class="card" style="margin-bottom:12px;border-left:3px solid var(--red2)">
-      <div style="font-family:var(--fm);font-size:.58rem;color:var(--muted);line-height:2.1">
+      <div style="font-family:var(--fm);font-size:.58rem;color:#fff;line-height:2.1">
         📍 Gymnase Blaise GOUIRAN · 12 rue du Stade · 13740 LE ROVE<br>
         📅 Samedi 18 Avril 2026<br>
         ⏳ Horaires : infos à venir<br>
@@ -591,17 +591,17 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
     <div class="card" id="insc-form-wrap">
       <div style="font-family:var(--fh);font-size:1rem;letter-spacing:2px;margin-bottom:16px;color:var(--red2)">INFORMATIONS COMBATTANT</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div><label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">NOM *</label>
+        <div><label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:4px">NOM *</label>
         <input id="insc-nom" type="text" placeholder="DUPONT" style="width:100%;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:#fff;font-family:var(--fh);font-size:.85rem;box-sizing:border-box"></div>
-        <div><label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">PRÉNOM *</label>
+        <div><label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:4px">PRÉNOM *</label>
         <input id="insc-prenom" type="text" placeholder="Lucas" style="width:100%;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:#fff;font-family:var(--fm);font-size:.85rem;box-sizing:border-box"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
-        <div><label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">ÂGE *</label>
+        <div><label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:4px">ÂGE *</label>
         <input id="insc-age" type="number" min="6" max="17" placeholder="12" oninput="updateCatPreview()" style="width:100%;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:#fff;font-family:var(--fm);font-size:.85rem;box-sizing:border-box"></div>
-        <div><label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">POIDS kg *</label>
+        <div><label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:4px">POIDS kg *</label>
         <input id="insc-poids" type="number" min="15" max="120" step="0.5" placeholder="45.5" style="width:100%;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:#fff;font-family:var(--fm);font-size:.85rem;box-sizing:border-box"></div>
-        <div><label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">GENRE *</label>
+        <div><label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:4px">GENRE *</label>
         <select id="insc-genre" style="width:100%;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:8px 6px;color:#fff;font-family:var(--fm);font-size:.8rem;box-sizing:border-box">
           <option value="">—</option><option value="M">♂ M</option><option value="F">♀ F</option>
         </select></div>
@@ -609,21 +609,21 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
       <div id="cat-preview" style="display:none;margin-bottom:12px">
         <div style="background:rgba(200,0,10,.08);border:1px solid rgba(200,0,10,.3);border-radius:6px;padding:8px 12px;font-family:var(--fm);font-size:.6rem;color:var(--red2)">📋 Catégorie détectée : <strong id="cat-preview-label"></strong></div>
       </div>
-      <div style="margin-bottom:12px"><label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">CLUB *</label>
+      <div style="margin-bottom:12px"><label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:4px">CLUB *</label>
       <select id="insc-club" style="width:100%;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:#fff;font-family:var(--fm);font-size:.85rem;box-sizing:border-box">
         <option value="">— Sélectionner le club —</option>
       </select></div>
-      <div style="font-family:var(--fh);font-size:.8rem;letter-spacing:2px;margin:14px 0 10px;color:var(--muted)">CONTACT PARENT / TUTEUR</div>
-      <div style="margin-bottom:12px"><label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">TÉLÉPHONE * (urgence)</label>
+      <div style="font-family:var(--fh);font-size:.8rem;letter-spacing:2px;margin:14px 0 10px;color:#fff">CONTACT PARENT / TUTEUR</div>
+      <div style="margin-bottom:12px"><label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:4px">TÉLÉPHONE * (urgence)</label>
       <input id="insc-tel" type="tel" placeholder="06 12 34 56 78" style="width:100%;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:#fff;font-family:var(--fm);font-size:.85rem;box-sizing:border-box"></div>
-      <div style="margin-bottom:16px"><label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:4px">EMAIL *</label>
+      <div style="margin-bottom:16px"><label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:4px">EMAIL *</label>
       <input id="insc-email" type="email" placeholder="parent@email.com" style="width:100%;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:#fff;font-family:var(--fm);font-size:.85rem;box-sizing:border-box"></div>
       <div style="background:rgba(232,184,75,.06);border:1px solid rgba(232,184,75,.2);border-radius:8px;padding:12px;margin-bottom:14px">
         <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:2px;color:var(--gold);margin-bottom:8px">📋 AUTORISATION PARENTALE</div>
-        <div style="font-family:var(--fm);font-size:.55rem;color:var(--muted);line-height:1.9;margin-bottom:10px">J'autorise mon enfant à participer à la compétition interclubs MMA du 18 Avril 2026 organisée par Mix Martial Academy. Je certifie que mon enfant est titulaire d'une licence sportive valide et apte médicalement.</div>
+        <div style="font-family:var(--fm);font-size:.55rem;color:#fff;line-height:1.9;margin-bottom:10px">J'autorise mon enfant à participer à la compétition interclubs MMA du 18 Avril 2026 organisée par Mix Martial Academy. Je certifie que mon enfant est titulaire d'une licence sportive valide et apte médicalement.</div>
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
                 <div style="margin-bottom:16px">
-        <label style="font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px">📸 PHOTO DU COMBATTANT *</label>
+        <label style="font-family:var(--fm);font-size:.52rem;color:#fff;letter-spacing:1px;display:block;margin-bottom:6px">📸 PHOTO DU COMBATTANT *</label>
         <div style="background:rgba(255,255,255,.04);border:1px dashed var(--border2);border-radius:8px;padding:12px;text-align:center">
           <input type="file" id="insc-photo" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)">
           <div id="insc-photo-preview" style="display:none;margin-bottom:10px">
@@ -632,7 +632,7 @@ body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:1
           <button type="button" onclick="document.getElementById('insc-photo').click()" style="background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:6px;padding:8px 16px;color:var(--fg);font-family:var(--fm);font-size:.6rem;letter-spacing:1px;cursor:pointer">
             📷 CHOISIR UNE PHOTO
           </button>
-          <div style="font-family:var(--fm);font-size:.52rem;color:var(--muted);margin-top:8px;line-height:1.7">
+          <div style="font-family:var(--fm);font-size:.52rem;color:#fff;margin-top:8px;line-height:1.7">
             Cette photo nous aide à <strong style="color:var(--text)">reconnaître votre enfant le jour J</strong> pour simplifier l'appel et l'organisation. Elle reste confidentielle et est utilisée uniquement par l'équipe organisatrice.
           </div>
         </div>
@@ -4801,7 +4801,7 @@ function showInscription(){
       "<div style='text-align:center;padding:40px 20px'>" +
       "<div style='font-size:4rem;margin-bottom:20px'>🔒</div>" +
       "<div style='font-family:var(--fh);font-size:1.4rem;letter-spacing:3px;color:var(--red2);margin-bottom:12px'>INSCRIPTIONS FERMÉES</div>" +
-      "<div style='font-family:var(--fm);font-size:.7rem;color:var(--muted);line-height:2;margin-bottom:24px'>" +
+      "<div style='font-family:var(--fm);font-size:.7rem;color:#fff;line-height:2;margin-bottom:24px'>" +
         "Les inscriptions pour la compétition<br>" +
         "<strong style='color:#fff'>Mix Martial Academy — 18 Avril · Le Rove</strong><br>" +
         "sont actuellement fermées.<br>" +
@@ -4886,7 +4886,7 @@ function submitInscription(){
       "<div style='font-size:4rem;margin-bottom:20px'>🏆</div>" +
       "<div style='font-family:var(--fh);font-size:1.6rem;letter-spacing:3px;color:var(--gold);margin-bottom:12px'>INSCRIPTION VALIDÉE</div>" +
       "<div style='font-family:var(--fh);font-size:1rem;letter-spacing:2px;color:#fff;margin-bottom:8px'>avec succès !</div>" +
-      "<div style='font-family:var(--fm);font-size:.75rem;color:var(--muted);margin:20px 0;line-height:1.9'>" +
+      "<div style='font-family:var(--fm);font-size:.75rem;color:#fff;margin:20px 0;line-height:1.9'>" +
         "<span style='color:var(--red2);font-size:.9rem;font-family:var(--fh)'>" + nom + " " + pre + "</span><br>" +
         "est bien inscrit(e) à la compétition.<br><br>" +
         "<span style='font-size:1.1rem'>📅</span> On vous attend le <strong style='color:#fff'>Samedi 18 Avril</strong><br>" +
