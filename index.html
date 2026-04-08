@@ -709,7 +709,7 @@ function saveState(){
         return COMBATTANTS.map(function(cb){
           return {id:cb.id, nom:cb.nom, pre:cb.pre, age:cb.age, pdsD:cb.pdsD,
                   club:cb.club, g:cb.g, e:cb.e||'🥋',
-                  present:cb.present||null, pdsP:cb.pdsP||null, cat:cb.cat||null, photo:cb.photo||null};
+                  present:cb.present||null, pdsP:cb.pdsP||null, cat:cb.cat||null};
         });
       })(),
       ageCats: AGE_CATS.map(function(ac){
@@ -945,6 +945,18 @@ function fbInit(){
       if(ps&&ps.style.display!=='none'){
         if(_suiviTab==='res') renderSuiviResultats(); else renderSuivi();
       }
+    });
+    // Listener inscOpen — fermeture/ouverture inscriptions en temps réel
+    _fbRef.child('inscOpen').on('value',function(snap){
+      var val=snap.val();
+      if(val===null) return; // pas encore défini → garder état local
+      _inscOpen=(val===true||val==='true');
+      try{localStorage.setItem('mma_insc_open',JSON.stringify(_inscOpen));}catch(e){}
+      // Rafraîchir le formulaire public si ouvert
+      var pgInsc=document.getElementById('pg-inscription');
+      if(pgInsc&&pgInsc.style.display!=='none') showInscription();
+      // Rafraîchir l'admin si ouvert
+      if(role==='admin'){renderInscriptions();renderClubsAdmin();}
     });
     _fbListening=true;
   }catch(e){console.warn('fbInit:',e);}
@@ -1203,7 +1215,7 @@ function renderAppelTable(){
       var ico=s2===true?"✔":s2===false?"✕":"?";
       var lbl=s2===true?"<span class='ok'>PRÉSENT</span>":s2===false?"<span class='err'>ABSENT</span>":"<span class='mut'>APPEL...</span>";
       h+="<div class='"+cls+"' onclick=\"togglePresTable('"+cat+"','"+fi.id+"')\">";
-      h+="<div style='font-size:1.7rem;flex-shrink:0'>"+(fi.e||"🥋")+"</div>";
+      h+="<div style='flex-shrink:0'>"+fPhoto(fi,40)+"</div>";
       h+="<div style='flex:1;min-width:0'>";
       h+="<div style='font-family:var(--fh);font-size:1.05rem'>"+fi.nom+" "+fi.pre+"</div>";
       h+="<div style='font-family:var(--fm);font-size:.57rem;color:var(--muted);margin-top:2px'>"+fi.club+"</div>";
@@ -1262,6 +1274,20 @@ function validerAppelTable(){
     if(presents.length===0) presents=pool.fighters.slice();
     PD[cat]=true;
     var newFmt=getFormat(presents.length);
+    // Algo anti-même club : éviter que 2 combattants du même club s'affrontent au 1er combat
+    // Un seul échange par paire adjacente, maximum 1 tentative pour éviter boucle infinie
+    if(presents.length>=4 && newFmt==='elim'){
+      var sorted=presents.slice();
+      for(var pi=0;pi<sorted.length-1;pi+=2){
+        if(sorted[pi].club && sorted[pi+1].club && sorted[pi].club===sorted[pi+1].club){
+          var swapIdx=pi+2;
+          if(swapIdx<sorted.length && sorted[swapIdx].club!==sorted[pi].club){
+            var tmp=sorted[pi+1]; sorted[pi+1]=sorted[swapIdx]; sorted[swapIdx]=tmp;
+          }
+        }
+      }
+      presents=sorted;
+    }
     if(newFmt!==pool.format||presents.length<pFighters(pool).length){
       FIGHTS=FIGHTS.filter(function(f){return f.cat!==cat;});
       var nf=presents.length>=2?buildFights(presents,newFmt,cat,pool.dur,FIGHTS.length):[];
@@ -1373,7 +1399,20 @@ function getFighters(ageCatId){
 }
 function getDur(age){return age<=13?180:240;}
 function fmt(s){return Math.floor(s/60)+":"+(("0"+(s%60)).slice(-2));}
-function cloneF(o){return {nom:o.nom,pre:o.pre,club:o.club,e:o.e,id:o.id};}
+function cloneF(o){return {nom:o.nom,pre:o.pre,club:o.club,e:o.e,id:o.id,photo:o.photo||null};}
+
+function fPhoto(cb,size){
+  size=size||40;
+  var photo=cb.photo;
+  if(!photo){
+    var full=COMBATTANTS.find(function(x){return x.id===cb.id;});
+    if(full) photo=full.photo;
+  }
+  if(photo&&photo.indexOf('data:')===0){
+    return "<img src='"+photo+"' style='width:"+size+"px;height:"+size+"px;border-radius:50%;object-fit:cover;border:2px solid rgba(232,184,75,.6);display:block;margin:0 auto'>";
+  }
+  return "<div style='width:"+size+"px;height:"+size+"px;border-radius:50%;background:var(--dark3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:"+Math.round(size*0.45)+"px'>👤</div>";
+}
 function getFormat(n){
   if(n<=1) return "bye"; if(n===2) return "aller-retour";
   if(n===3) return "robin3"; if(n===4) return "nordique4"; return "elim";
@@ -2039,12 +2078,12 @@ function renderLive(){
         var vs=document.createElement("div");
         vs.className="live-vs";
         var fa=document.createElement("div"); fa.className="live-fighter";
-        fa.innerHTML="<div style='font-size:1.4rem'>"+f.a.e+"</div><div class='live-fname'>"+f.a.nom+"</div><div style='font-family:var(--fb);font-size:.7rem;color:var(--muted)'>"+f.a.pre+"</div>";
+        fa.innerHTML=fPhoto(f.a,36)+"<div class='live-fname'>"+f.a.nom+"</div><div style='font-family:var(--fb);font-size:.7rem;color:var(--muted)'>"+f.a.pre+"</div>";
         var vsm=document.createElement("div");
         vsm.style.cssText="font-family:var(--fh);font-size:1rem;color:var(--red2);flex-shrink:0";
         vsm.textContent="VS";
         var fb=document.createElement("div"); fb.className="live-fighter";
-        fb.innerHTML="<div style='font-size:1.4rem'>"+f.b.e+"</div><div class='live-fname'>"+f.b.nom+"</div><div style='font-family:var(--fb);font-size:.7rem;color:var(--muted)'>"+f.b.pre+"</div>";
+        fb.innerHTML=fPhoto(f.b,36)+"<div class='live-fname'>"+f.b.nom+"</div><div style='font-family:var(--fb);font-size:.7rem;color:var(--muted)'>"+f.b.pre+"</div>";
         vs.appendChild(fa); vs.appendChild(vsm); vs.appendChild(fb);
         body.appendChild(vs);
 
@@ -2653,12 +2692,12 @@ function computePodium(pool){
     var rows=computeStandings(pool);
     return rows.map(function(r){
       var fi=F.find(function(f){return f.nom===r.nom&&f.pre===r.pre;})||{};
-      return {nom:r.nom,pre:r.pre,e:fi.e||"🥋",v:r.v,d:r.d};
+      return {nom:r.nom,pre:r.pre,id:fi.id||null,photo:fi.photo||null,v:r.v,d:r.d};
     });
   }
   if(fmt==="aller-retour"){
     var sc={};
-    F.forEach(function(fi){sc[fi.id]={nom:fi.nom,pre:fi.pre,e:fi.e,v:0,d:0};});
+    F.forEach(function(fi){sc[fi.id]={nom:fi.nom,pre:fi.pre,id:fi.id,photo:fi.photo||null,v:0,d:0};});
     fights.forEach(function(f){
       if(!f.done||!f.winner) return;
       var w=f[f.winner],l=f[f.winner==="a"?"b":"a"];
@@ -2671,8 +2710,8 @@ function computePodium(pool){
   var sc2={};
   fights.filter(function(f){return f.done&&f.winner&&f.type!=='elim-3';}).forEach(function(f){
     var w=f[f.winner],l=f[f.winner==='a'?'b':'a'];
-    if(!sc2[w.id]) sc2[w.id]={nom:w.nom,pre:w.pre,e:w.e||'🥋',v:0,d:0};
-    if(!sc2[l.id]) sc2[l.id]={nom:l.nom,pre:l.pre,e:l.e||'🥊',v:0,d:0};
+    if(!sc2[w.id]) sc2[w.id]={nom:w.nom,pre:w.pre,id:w.id,photo:w.photo||null,v:0,d:0};
+    if(!sc2[l.id]) sc2[l.id]={nom:l.nom,pre:l.pre,id:l.id,photo:l.photo||null,v:0,d:0};
     sc2[w.id].v++; sc2[l.id].d++;
   });
   var finale=fights.find(function(f){return f.type==="elim-f";});
@@ -2682,8 +2721,8 @@ function computePodium(pool){
   if(finale&&finale.done&&finale.winner){
     var w1=finale[finale.winner],l1=finale[finale.winner==="a"?"b":"a"];
     var s1=sc2[w1.id]||{v:0,d:0}; var s2=sc2[l1.id]||{v:0,d:0};
-    res.push({nom:w1.nom,pre:w1.pre,e:w1.e||'🥋',v:s1.v,d:s1.d});
-    res.push({nom:l1.nom,pre:l1.pre,e:l1.e||'🥊',v:s2.v,d:s2.d});
+    res.push({nom:w1.nom,pre:w1.pre,id:w1.id,photo:w1.photo||null,v:s1.v,d:s1.d});
+    res.push({nom:l1.nom,pre:l1.pre,id:l1.id,photo:l1.photo||null,v:s2.v,d:s2.d});
   }
   if(petite&&petite.done&&petite.winner){
     var w3=petite[petite.winner]; var s3=sc2[w3.id]||{v:0,d:0};
@@ -2693,12 +2732,12 @@ function computePodium(pool){
     var scP={};
     fights.filter(function(f){return f.done&&f.winner;}).forEach(function(f){
       var w=f[f.winner],l=f[f.winner==='a'?'b':'a'];
-      if(!scP[w.id]) scP[w.id]={nom:w.nom,pre:w.pre,e:w.e||'🥋',v:0,d:0};
-      if(!scP[l.id]) scP[l.id]={nom:l.nom,pre:l.pre,e:l.e||'🥊',v:0,d:0};
+      if(!scP[w.id]) scP[w.id]={nom:w.nom,pre:w.pre,id:w.id,photo:w.photo||null,v:0,d:0};
+      if(!scP[l.id]) scP[l.id]={nom:l.nom,pre:l.pre,id:l.id,photo:l.photo||null,v:0,d:0};
       scP[w.id].v++; scP[l.id].d++;
     });
     var w3s=scP[w3.id]||{v:0,d:0};
-    res.push({nom:w3.nom,pre:w3.pre,e:w3.e||'🥋',v:w3s.v,d:w3s.d});
+    res.push({nom:w3.nom,pre:w3.pre,id:w3.id,photo:w3.photo||null,v:w3s.v,d:w3s.d});
   }
   return res;
 }
@@ -2750,7 +2789,7 @@ function renderResultats(){
           for(var pi=0;pi<Math.min(podium.length,3);pi++){
             var p=podium[pi];
             h+="<div style='background:var(--dark4);border:1px solid var(--border2);border-radius:8px;padding:10px 8px;text-align:center;flex:1;min-width:70px;max-width:120px'>";
-            h+="<div style='font-size:1.5rem'>"+(p.e||"🥋")+"</div><div style='font-size:1.2rem'>"+medals[pi]+"</div>";
+            h+="<div style='margin:0 auto 4px'>"+fPhoto(p,40)+"</div><div style='font-size:1.2rem'>"+medals[pi]+"</div>";
             h+="<div style='font-family:var(--fh);font-size:.9rem;color:"+mc[pi]+"'>"+p.nom+"</div>";
             h+="<div style='font-size:.72rem;color:var(--muted)'>"+p.pre+"</div>";
             h+="<div style='font-family:var(--fm);font-size:.5rem;color:var(--muted);margin-top:2px'>"+p.v+"V·"+p.d+"D</div>";
@@ -2942,7 +2981,7 @@ function renderFight(f){
   document.getElementById("fp-sub").textContent=f.type;
   document.getElementById("fp-dur").textContent=f.dur===180?"⏱ 3 MIN":"⏱ 4 MIN";
   ["a","b"].forEach(function(s){
-    document.getElementById("emo-"+s).textContent=f[s].e||"🥋";
+    document.getElementById("emo-"+s).innerHTML=fPhoto(f[s],60);
     document.getElementById("nom-"+s).textContent=f[s].nom;
     document.getElementById("pre-"+s).textContent=f[s].pre;
     document.getElementById("clu-"+s).textContent=f[s].club||"";
@@ -3040,7 +3079,7 @@ function renderPickBtns(){
   var f=FIGHTS.find(function(x){return x.id===cid;}),h="";
   ["a","b"].forEach(function(s){
     h+="<div class=\"pickbtn\" id=\"pb-"+s+"\" onclick=\"selectWin('"+s+"')\">";
-    h+="<div style=\"font-size:2rem;margin-bottom:5px\">"+(f[s].e||"🥋")+"</div>";
+    h+="<div style='margin-bottom:5px'>"+fPhoto(f[s],50)+"</div>";
     h+="<div style=\"font-family:var(--fh);font-size:1.1rem;letter-spacing:1px\">"+f[s].nom+"</div>";
     h+="<div style=\"font-size:.82rem;color:var(--muted)\">"+f[s].pre+"</div></div>";
   });
@@ -3164,7 +3203,7 @@ function showPodiumModal(cat){
 
       var name=document.createElement("div");
       name.className="podium-name";
-      name.textContent=(p.e||"")+" "+p.nom+" "+p.pre;
+      var photoDiv2=document.createElement("div");photoDiv2.style.cssText="margin-bottom:6px";photoDiv2.innerHTML=fPhoto(p,48);info.insertBefore(photoDiv2,info.firstChild);name.textContent=p.nom+" "+p.pre;
 
       var club=document.createElement("div");
       club.className="podium-club";
@@ -3398,7 +3437,7 @@ function renderDone(f){
   document.getElementById("res-wrap").innerHTML=
     "<div style=\"background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.22);border-radius:8px;padding:16px;text-align:center\">"+
     "<div style=\"font-family:var(--fm);font-size:.58rem;letter-spacing:3px;color:var(--muted);margin-bottom:6px\">RESULTAT ENREGISTRÉ</div>"+
-    "<div style=\"font-size:2rem;margin-bottom:6px\">🏆</div>"+
+    "<div style='margin:6px auto 8px'>"+fPhoto(w,56)+"</div>"+
     "<div style=\"font-family:var(--fh);font-size:1.7rem;letter-spacing:2px;color:var(--green)\">"+w.nom+" "+w.pre+"</div>"+
     "<div style=\"font-family:var(--fm);font-size:.56rem;color:var(--muted);margin-top:4px\">"+(w.club||"")+"</div>"+
     "<div style=\"font-family:var(--fm);font-size:.56rem;color:#444;margin-top:10px\">DEFAITE : "+l.nom+" "+l.pre+"</div></div>"+
@@ -3447,9 +3486,9 @@ function renderNext(){
   wrap.onclick=function(){goFight(next.id);};
   wrap.innerHTML="<div style=\"font-family:var(--fh);font-size:.88rem;letter-spacing:3px;color:var(--gold);margin-bottom:10px\">⚡ COMBAT SUIVANT</div>"+
     "<div style=\"display:flex;align-items:center;gap:10px;flex-wrap:wrap\">"+
-    "<div style=\"flex:1;text-align:center;min-width:70px\"><div style=\"font-size:1.6rem\">"+(next.a.e||"🥋")+"</div><div style=\"font-family:var(--fh);font-size:.95rem\">"+next.a.nom+"</div><div style=\"font-size:.75rem;color:var(--muted)\">"+next.a.pre+"</div></div>"+
+    "<div style=\"flex:1;text-align:center;min-width:70px\">"+fPhoto(next.a,44)+"<div style=\"font-family:var(--fh);font-size:.95rem;margin-top:4px\">"+next.a.nom+"</div><div style=\"font-size:.75rem;color:var(--muted)\">"+next.a.pre+"</div></div>"+
     "<div style=\"text-align:center;flex-shrink:0\"><div style=\"font-family:var(--fh);font-size:1.3rem;color:var(--red2)\">VS</div><div style=\"font-family:var(--fm);font-size:.52rem;color:var(--gold)\">"+next.lbl+"</div></div>"+
-    "<div style=\"flex:1;text-align:center;min-width:70px\"><div style=\"font-size:1.6rem\">"+(next.b.e||"🥊")+"</div><div style=\"font-family:var(--fh);font-size:.95rem\">"+next.b.nom+"</div><div style=\"font-size:.75rem;color:var(--muted)\">"+next.b.pre+"</div></div></div>";
+    "<div style=\"flex:1;text-align:center;min-width:70px\">"+fPhoto(next.b,44)+"<div style=\"font-family:var(--fh);font-size:.95rem;margin-top:4px\">"+next.b.nom+"</div><div style=\"font-size:.75rem;color:var(--muted)\">"+next.b.pre+"</div></div></div>";
   el.innerHTML="";
   el.appendChild(wrap);
   var bb=document.createElement("button");
@@ -3474,9 +3513,9 @@ function renderNRem(currentId){
   if(!next){el.innerHTML="";return;}
   el.innerHTML="<div class=\"nrem\"><div style=\"font-family:var(--fh);font-size:.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:8px\">⚡ PROCHAIN COMBAT</div>"+
     "<div style=\"display:flex;align-items:center;gap:8px\">"+
-    "<div style=\"flex:1;text-align:center\"><div style=\"font-size:1.3rem\">"+(next.a.e||"🥋")+"</div><div style=\"font-family:var(--fh);font-size:.85rem\">"+next.a.nom+"</div><div style=\"font-size:.7rem;color:var(--muted)\">"+next.a.pre+"</div></div>"+
+    "<div style=\"flex:1;text-align:center\">"+fPhoto(next.a,40)+"<div style=\"font-family:var(--fh);font-size:.85rem;margin-top:3px\">"+next.a.nom+"</div><div style=\"font-size:.7rem;color:var(--muted)\">"+next.a.pre+"</div></div>"+
     "<div style=\"text-align:center;flex-shrink:0\"><div style=\"font-family:var(--fh);font-size:1rem;color:var(--red2)\">VS</div></div>"+
-    "<div style=\"flex:1;text-align:center\"><div style=\"font-size:1.3rem\">"+(next.b.e||"🥊")+"</div><div style=\"font-family:var(--fh);font-size:.85rem\">"+next.b.nom+"</div><div style=\"font-size:.7rem;color:var(--muted)\">"+next.b.pre+"</div></div></div></div>";
+    "<div style=\"flex:1;text-align:center\">"+fPhoto(next.b,40)+"<div style=\"font-family:var(--fh);font-size:.85rem;margin-top:3px\">"+next.b.nom+"</div><div style=\"font-size:.7rem;color:var(--muted)\">"+next.b.pre+"</div></div></div></div>";
 }
 
 // TOAST
@@ -3705,7 +3744,7 @@ function renderInscriptions(){
     var matchF = _insFilter === "all" ||
                  (_insFilter === "M" && cb.g === "M") ||
                  (_insFilter === "F" && cb.g === "F") ||
-                 (_insFilter === cb.ageCatId);
+                 (_insFilter === (getAgeCat(cb.age)||{}).id);
     return matchQ && matchF;
   });
 
@@ -4387,7 +4426,7 @@ function renderSuiviResultats(){
         for(var pi=0;pi<Math.min(podium.length,3);pi++){
           var p=podium[pi];
           h+="<div style='background:var(--dark3);border:1px solid var(--border2);border-radius:8px;padding:10px 8px;text-align:center;flex:1;min-width:80px;max-width:130px'>";
-          h+="<div style='font-size:1.4rem'>"+(p.e||'🥋')+"</div>";
+          h+="<div style='margin:0 auto 4px'>"+fPhoto(p,36)+"</div>";
           h+="<div style='font-size:1.1rem'>"+medals[pi]+"</div>";
           h+="<div style='font-family:var(--fh);font-size:.8rem;color:"+mc[pi]+";margin-top:2px'>"+esc(p.nom)+"</div>";
           h+="<div style='font-family:var(--fm);font-size:.42rem;color:var(--muted)'>"+esc(p.pre)+"</div>";
@@ -4429,6 +4468,7 @@ function fCard(f,role){
   var nameColor=role==='win'?'#4ade80':role==='lose'?'var(--muted)':role==='live'?'#fff':'var(--fg)';
   var isUnknown=f.nom==='?' || f.id==='ph';
   return "<div style='"+s+"border-radius:7px;padding:7px 10px;min-width:100px;text-align:center'>"
+    +(isUnknown?"":"<div style='margin-bottom:4px'>"+fPhoto(f,32)+"</div>")
     +(icon?"<div style='font-size:.9rem;margin-bottom:2px'>"+icon+"</div>":"")
     +"<div style='font-family:var(--fh);font-size:.72rem;color:"+nameColor+"'>"+(isUnknown?'<span style=\"color:var(--muted);font-size:.6rem\">à déterminer</span>':esc(f.nom))+"</div>"
     +(isUnknown?'':"<div style='font-family:var(--fm);font-size:.42rem;color:var(--muted)'>"+esc(f.pre)+"<br>"+esc(f.club)+"</div>")
@@ -4715,8 +4755,7 @@ function submitInscription(){
   if(!photoImg||!photoImg.src||!photoImg.src.startsWith('data:'))errors.push('Photo du combattant requise');
   if(errors.length){err.style.display='block';err.textContent=errors.join(' · ');return;}
   err.style.display='none';
-  loadInscriptions();
-  if(_inscriptions.find(function(x){return x.nom===nom&&x.pre===pre&&x.club===club;})){err.style.display='block';err.textContent='⚠ Cette inscription existe déjà ('+nom+' '+pre+' / '+club+')';return;}
+  // Ne pas appeler loadInscriptions() - la vérification doublon se fait dans once('value') plus bas
   var ac=getAgeCat(age);
   var photoEl = document.getElementById('insc-photo-img');
   var photo = (photoEl && photoEl.src && photoEl.src.startsWith('data:')) ? photoEl.src : null;
@@ -4774,7 +4813,14 @@ function renderClubsAdmin(){
   h+="<div style='display:flex;gap:8px;margin-top:10px'><input type='text' id='new-club-inp' placeholder='Nouveau club' style='flex:1;background:var(--dark3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:#fff;font-family:var(--fm);font-size:.8rem'><button onclick='addClub()' class='btn su' style='font-family:var(--fm);font-size:.6rem;white-space:nowrap'>+ AJOUTER</button></div></div>";
   el.innerHTML=h;
 }
-function toggleInscOpen(){_inscOpen=!_inscOpen;try{localStorage.setItem('mma_insc_open',JSON.stringify(_inscOpen));}catch(e){}toast(_inscOpen?'✅ Inscriptions ouvertes':'🔒 Inscriptions fermées',_inscOpen?'ok':'warn');renderClubsAdmin();renderInscriptions();}
+function toggleInscOpen(){
+  _inscOpen=!_inscOpen;
+  try{localStorage.setItem('mma_insc_open',JSON.stringify(_inscOpen));}catch(e){}
+  // Écrire dans Firebase pour que tous les appareils soient notifiés
+  if(_fbRef){try{_fbRef.child('inscOpen').set(_inscOpen);}catch(e){}}
+  toast(_inscOpen?'✅ Inscriptions ouvertes':'🔒 Inscriptions fermées',_inscOpen?'ok':'warn');
+  renderClubsAdmin();renderInscriptions();
+}
 function addClub(){var inp=document.getElementById('new-club-inp'),v=inp?inp.value.trim():'';if(!v){toast('Entrez un nom','warn');return;}if(CLUBS.indexOf(v)!==-1){toast('Club déjà existant','warn');return;}CLUBS.push(v);saveClubs();toast('+ '+v+' ajouté','ok');if(inp)inp.value='';renderClubsAdmin();}
 function saveClubEdit(i){var inp=document.getElementById('club-inp-'+i),v=inp?inp.value.trim():'';if(!v){toast('Nom vide','warn');return;}CLUBS[i]=v;saveClubs();toast('✔ Club modifié','ok');renderClubsAdmin();}
 function deleteClub(i){if(!confirm('Supprimer '+CLUBS[i]+' ?'))return;CLUBS.splice(i,1);saveClubs();toast('🗑 Club supprimé','warn');renderClubsAdmin();}
