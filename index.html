@@ -704,12 +704,10 @@ function saveState(){
   try {
     var state = {
       combattants: (function(){
-        // Sauvegarder TOUS les combattants depuis COMBATTANTS (source de vérité en mémoire)
-        // qui contient les modifications de pesée (pdsP, cat) faites via setCatPoids
+        // Sauvegarder UNIQUEMENT les données compétition (pesée, présence, cat)
+        // Les données identité (nom, pre, club...) vivent dans inscriptions_ — pas ici
         return COMBATTANTS.map(function(cb){
-          return {id:cb.id, nom:cb.nom, pre:cb.pre, age:cb.age, pdsD:cb.pdsD,
-                  club:cb.club, g:cb.g, e:cb.e||'🥋',
-                  present:cb.present||null, pdsP:cb.pdsP||null, cat:cb.cat||null};
+          return {id:cb.id, present:cb.present||null, pdsP:cb.pdsP||null, cat:cb.cat||null};
         });
       })(),
       ageCats: AGE_CATS.map(function(ac){
@@ -977,33 +975,16 @@ function applyRemoteState(data){
       var cbArr = Array.isArray(data.combattants)
         ? data.combattants
         : Object.values(data.combattants);
-      // Reconstruire COMBATTANTS complet depuis Firebase — source de vérité unique
-      COMBATTANTS = cbArr.map(function(sc){
-        return {
-          id:      sc.id,
-          nom:     sc.nom     || '',
-          pre:     sc.pre     || '',
-          age:     sc.age     || 0,
-          pdsD:    sc.pdsD    || 0,
-          club:    sc.club    || '',
-          g:       sc.g       || 'M',
-          e:       sc.e       || '🥋',
-          present: (sc.present===true||sc.present==='true') ? true : (sc.present===false||sc.present==='false') ? false : null,
-          pdsP:    sc.pdsP    || null,
-          cat:     sc.cat     || null,
-          photo:   sc.photo   || null
-        };
+      // Merger UNIQUEMENT les données compétition (présence, pesée, cat) sur COMBATTANTS existants
+      // COMBATTANTS est peuplé par inscriptions_ — on ne remplace pas, on enrichit
+      cbArr.forEach(function(sc){
+        var cb = COMBATTANTS.find(function(x){ return x.id === sc.id; });
+        if(cb){
+          cb.present = (sc.present===true||sc.present==='true') ? true : (sc.present===false||sc.present==='false') ? false : null;
+          cb.pdsP    = sc.pdsP || null;
+          cb.cat     = sc.cat  || null;
+        }
       });
-      // Réhydrater les photos depuis _inscriptions (source Firebase toujours à jour)
-      // car saveState ne sauvegarde pas photo dans combattants pour alléger Firebase
-      if(_inscriptions && _inscriptions.length > 0){
-        COMBATTANTS.forEach(function(cb){
-          if(!cb.photo){
-            var insc=_inscriptions.find(function(x){return x.id===cb.id;});
-            if(insc && insc.photo) cb.photo=insc.photo;
-          }
-        });
-      }
       changed=true;
     }
     if(data.ageCats){
