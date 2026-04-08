@@ -3896,7 +3896,7 @@ function renderInscriptions(){
       var catPds = ac ? getCatPoids(ac, cb.pdsD) : "—";
       h += "<tr>";
       var cbThumb = (cb.photo && cb.photo.indexOf('data:')===0) ? "<img src='" + cb.photo + "' style='width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);margin-right:6px;vertical-align:middle'>" : "<span style='display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--dark3);text-align:center;line-height:28px;font-size:.7rem;margin-right:6px;vertical-align:middle'>👤</span>";
-      h += "<td>" + cbThumb + "<b style='font-family:var(--fh);letter-spacing:1px'>" + cb.nom + "</b> " + cb.pre + "</td>";
+      h += "<td>" + cbThumb + "<span style='font-family:var(--fh);letter-spacing:1px'>" + cb.nom + "</span> " + cb.pre + "</td>";
       h += "<td>"+cb.age+" ans</td>";
       h += "<td><span class='ins-cat-badge'>"+(ac?ac.lbl:"Hors cat.")+"</span></td>";
       h += "<td style='color:var(--gold)'>"+cb.pdsD+" kg</td>";
@@ -3944,7 +3944,7 @@ function insOnSearch(val){
       var ac=getAgeCat(cb.age);
       h+="<tr>";
       var cbThumb=(cb.photo&&cb.photo.indexOf('data:')===0)?"<img src='"+cb.photo+"' style='width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--gold);margin-right:6px;vertical-align:middle'>":"<span style='display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--dark3);text-align:center;line-height:28px;font-size:.7rem;margin-right:6px;vertical-align:middle'>👤</span>";
-      h+="<td>"+cbThumb+"<b style='font-family:var(--fh);letter-spacing:1px'>"+cb.nom+"</b> "+cb.pre+"</td>";
+      h+="<td>"+cbThumb+"<span style='font-family:var(--fh);letter-spacing:1px'>"+cb.nom+"</span> "+cb.pre+"</td>";
       h+="<td>"+cb.age+" ans</td>";
       h+="<td><span class='ins-cat-badge'>"+(ac?ac.lbl:"Hors cat.")+"</span></td>";
       h+="<td style='color:var(--gold)'>"+cb.pdsD+" kg</td>";
