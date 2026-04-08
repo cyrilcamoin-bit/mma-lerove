@@ -1301,7 +1301,11 @@ function validerAppelTable(){
       }
       presents=sorted;
     }
-    if(newFmt!==pool.format||presents.length<pFighters(pool).length){
+    // Vérifier si le tri anti-club a changé l'ordre des presents
+    var originalOrder=pFighters(pool).map(function(f){return f.id;}).join(',');
+    var sortedOrder=presents.map(function(f){return f.id;}).join(',');
+    var orderChanged=(originalOrder!==sortedOrder);
+    if(newFmt!==pool.format||presents.length<pFighters(pool).length||orderChanged){
       FIGHTS=FIGHTS.filter(function(f){return f.cat!==cat;});
       var nf=presents.length>=2?buildFights(presents,newFmt,cat,pool.dur,FIGHTS.length):[];
       var idMap={};
@@ -2704,6 +2708,18 @@ function doGenPoulesCat(acId, byPoids){
     if(fs.length===1) return; // solitaire — ignorer silencieusement
     var dur=getDur(fs[0].age);
     var fmt=getFormat(fs.length);
+    // Algo anti-même club : éviter 2 combattants du même club au Tour 1 (élim)
+    if(fmt==='elim'&&fs.length>=4){
+      for(var pi=0;pi<fs.length-1;pi+=2){
+        if(fs[pi].club&&fs[pi+1].club&&fs[pi].club===fs[pi+1].club){
+          for(var si=pi+2;si<fs.length;si++){
+            if(!fs[si].club||fs[si].club!==fs[pi].club){
+              var tmp=fs[pi+1];fs[pi+1]=fs[si];fs[si]=tmp;break;
+            }
+          }
+        }
+      }
+    }
     var fights=buildFights(fs,fmt,cat,dur,FIGHTS.length+newFights.length);
     POOLS[cat]={fighters:fs,fights:fights,format:fmt,dur:dur,acId:acId};
     fights.forEach(function(f){newFights.push(f);});
