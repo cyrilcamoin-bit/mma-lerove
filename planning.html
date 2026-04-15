@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Planning Prévisionnel — Interclubs MMA 18 Avril</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#c8000a;--red2:#ff1a24;
+  --dark:#080808;--dark2:#0f0f0f;--dark3:#161616;--dark4:#1e1e1e;
+  --border:#2c2c2c;--border2:#3a3a3a;
+  --text:#ebebeb;--muted:#bbb;
+  --gold:#e8b84b;--green:#22c55e;
+  --fh:'Bebas Neue',sans-serif;
+  --fb:'Barlow Condensed',sans-serif;
+  --fm:'Share Tech Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--dark);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--dark2)}::-webkit-scrollbar-thumb{background:var(--red);border-radius:3px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+#hdr{background:var(--dark2);border-bottom:2px solid var(--red);padding:0 16px;position:sticky;top:0;z-index:100}
+.hdi{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.hlogo{font-family:var(--fh);font-size:clamp(1.1rem,4vw,1.5rem);letter-spacing:3px;color:#fff;line-height:1}
+.hlogo span{color:var(--red2)}
+.hsub{font-family:var(--fm);font-size:.5rem;letter-spacing:3px;color:var(--gold);margin-top:2px}
+.conn{display:inline-flex;align-items:center;gap:5px;font-family:var(--fm);font-size:.55rem;letter-spacing:1px;padding:4px 10px;border-radius:20px;flex-shrink:0}
+.conn.on{color:rgba(34,197,94,.9);background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25)}
+.conn.off{color:rgba(239,68,68,.9);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25)}
+.cdot{width:6px;height:6px;border-radius:50%}
+.conn.on .cdot{background:var(--green);animation:blink 1.6s infinite}
+.conn.off .cdot{background:#ef4444}
+
+.wrap{max-width:760px;margin:0 auto;padding:12px 14px 80px}
+
+/* STATS BAR */
+.stats{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.stat{flex:1;min-width:100px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
+.stat-val{font-family:var(--fh);font-size:1.4rem;letter-spacing:2px;color:var(--gold)}
+.stat-lbl{font-family:var(--fm);font-size:.5rem;letter-spacing:2px;color:var(--muted);margin-top:2px}
+
+/* PROGRESS GLOBAL */
+.gprog{background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px}
+.gprog-title{font-family:var(--fm);font-size:.55rem;letter-spacing:3px;color:var(--muted);margin-bottom:6px}
+.gprog-bar{height:10px;background:var(--dark);border-radius:5px;overflow:hidden;position:relative}
+.gprog-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:5px;transition:width .6s ease}
+.gprog-pct{font-family:var(--fh);font-size:1rem;color:var(--gold);margin-top:4px;letter-spacing:2px}
+
+/* CATEGORY CARD */
+.cat-card{background:var(--dark2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;transition:border-color .3s}
+.cat-card.active{border-color:var(--gold);box-shadow:0 0 15px rgba(232,184,75,.1)}
+.cat-card.done{border-color:var(--green);box-shadow:0 0 10px rgba(34,197,94,.08)}
+.cat-hdr{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:8px}
+.cat-hdr:hover{background:rgba(255,255,255,.02)}
+.cat-name{font-family:var(--fh);font-size:1.15rem;letter-spacing:3px}
+.cat-badge{font-family:var(--fm);font-size:.5rem;letter-spacing:2px;padding:3px 8px;border-radius:12px;white-space:nowrap}
+.badge-attente{background:rgba(255,255,255,.06);color:var(--muted)}
+.badge-pesee{background:rgba(232,184,75,.12);color:var(--gold)}
+.badge-pret{background:rgba(34,197,94,.12);color:var(--green)}
+.badge-combats{background:rgba(200,0,10,.15);color:var(--red2);animation:pulse 2s infinite}
+.badge-termine{background:rgba(34,197,94,.15);color:var(--green)}
+
+.cat-body{padding:0 14px 14px;display:none}
+.cat-card.open .cat-body{display:block}
+
+/* TIMING ROW */
+.timing{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.timing-item{display:flex;align-items:center;gap:5px;font-family:var(--fm);font-size:.55rem;letter-spacing:1px;color:var(--muted)}
+.timing-item strong{color:var(--text)}
+
+/* POOL ROW */
+.pool-row{background:var(--dark3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pool-name{font-family:var(--fb);font-weight:700;font-size:.85rem;min-width:120px}
+.pool-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pool-fmt{font-family:var(--fm);font-size:.5rem;letter-spacing:1px;color:var(--muted)}
+.pool-prog{display:flex;align-items:center;gap:6px}
+.pool-bar{width:80px;height:5px;background:var(--dark);border-radius:3px;overflow:hidden}
+.pool-fill{height:100%;border-radius:3px;transition:width .4s}
+.pool-fill.pending{background:var(--muted)}
+.pool-fill.active{background:var(--gold)}
+.pool-fill.complete{background:var(--green)}
+.pool-count{font-family:var(--fm);font-size:.5rem;letter-spacing:1px;color:var(--muted)}
+
+/* TABLE ASSIGNMENT */
+.table-tag{font-family:var(--fm);font-size:.48rem;letter-spacing:1px;padding:2px 6px;border-radius:4px;background:rgba(232,184,75,.12);color:var(--gold)}
+
+/* CAT PROGRESS */
+.cat-prog{margin-top:8px}
+.cat-prog-bar{height:6px;background:var(--dark);border-radius:3px;overflow:hidden}
+.cat-prog-fill{height:100%;border-radius:3px;transition:width .5s}
+
+/* ESTIMATED TIME */
+.est{font-family:var(--fm);font-size:.52rem;color:var(--muted);letter-spacing:1px;margin-top:6px;text-align:right}
+.est strong{color:var(--gold)}
+
+/* LAST UPDATE */
+.last-update{text-align:center;font-family:var(--fm);font-size:.48rem;color:rgba(255,255,255,.25);letter-spacing:2px;margin-top:20px}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="hdi">
+    <div>
+      <div class="hlogo">MMA <span>INTERCLUBS</span></div>
+      <div class="hsub">PLANNING PRÉVISIONNEL · 18 AVRIL 2026</div>
+    </div>
+    <div class="conn off" id="conn"><span class="cdot"></span> HORS LIGNE</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- Stats globales -->
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="s-inscrits">—</div><div class="stat-lbl">INSCRITS</div></div>
+    <div class="stat"><div class="stat-val" id="s-combats">—</div><div class="stat-lbl">COMBATS</div></div>
+    <div class="stat"><div class="stat-val" id="s-done">—</div><div class="stat-lbl">TERMINÉS</div></div>
+    <div class="stat"><div class="stat-val" id="s-fin">—</div><div class="stat-lbl">FIN ESTIMÉE</div></div>
+  </div>
+
+  <!-- Barre de progression globale -->
+  <div class="gprog">
+    <div class="gprog-title">PROGRESSION GLOBALE</div>
+    <div class="gprog-bar"><div class="gprog-fill" id="gfill" style="width:0%"></div></div>
+    <div class="gprog-pct" id="gpct">0%</div>
+  </div>
+
+  <!-- Categories -->
+  <div id="cats"></div>
+
+  <div class="last-update" id="lastup">EN ATTENTE DES DONNÉES…</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ================================================================
+// CONFIG
+// ================================================================
+var firebaseConfig = {
+  apiKey: "AIzaSyA5Ecp7n8baUa2Tk-kmOgvMXWAKN9lQxaU",
+  authDomain: "mix-martial-academy.firebaseapp.com",
+  databaseURL: "https://mix-martial-academy-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "mix-martial-academy",
+  storageBucket: "mix-martial-academy.firebasestorage.app",
+  messagingSenderId: "451896183507",
+  appId: "1:451896183507:web:04eed101e318f90609a226"
+};
+var COMP_KEY = "interclubs_18avril_v2";
+
+// Catégories d'âge — mêmes paramètres que l'app principale
+var AGE_CATS = [
+  {id:"poussin",  lbl:"Poussin",  a1:6,  a2:9,  poids:[20,25,30,999]},
+  {id:"benjamin", lbl:"Benjamin", a1:10, a2:11, poids:[30,35,40,45,999]},
+  {id:"minime",   lbl:"Minime",   a1:12, a2:13, poids:[35,40,45,50,55,60,999]},
+  {id:"cadet",    lbl:"Cadet",    a1:14, a2:15, poids:[45,50,55,60,65,70,75,999]},
+  {id:"junior",   lbl:"Junior",   a1:16, a2:17, poids:[50,55,60,65,70,75,80,999]}
+];
+
+// Durée combat en secondes + transition
+function getDur(age){ return age <= 13 ? 180 : 240; }
+var PAUSE_BETWEEN = 120; // 2 min transition
+var PAUSE_CAT = 5;       // 5 min entre catégories
+var CONVOC_AVANT = 30;   // 30 min avant combats
+var START_HOUR = 9 * 60; // 9h00
+
+function getAgeCat(age){
+  for(var i=0;i<AGE_CATS.length;i++){
+    if(age>=AGE_CATS[i].a1 && age<=AGE_CATS[i].a2) return AGE_CATS[i];
+  }
+  return null;
+}
+function getCatPoids(ageCat, poids){
+  var prev=0;
+  for(var i=0;i<ageCat.poids.length;i++){
+    if(poids<=ageCat.poids[i]){
+      return ageCat.poids[i]===999 ? "+"+prev+"kg" : "-"+ageCat.poids[i]+"kg";
+    }
+    prev=ageCat.poids[i];
+  }
+  return "+"+ageCat.poids[ageCat.poids.length-2]+"kg";
+}
+function getFormat(n){
+  if(n<=1) return "bye"; if(n===2) return "aller-retour";
+  if(n===3) return "robin3"; if(n===4) return "nordique4"; return "elim";
+}
+function getFmtLabel(f){
+  var L={"bye":"Exempt","aller-retour":"Aller/Retour","robin3":"Round Robin","nordique4":"Nordique","elim":"Élimination"};
+  return L[f]||f;
+}
+function nbFightsForFormat(n){
+  var fmt=getFormat(n);
+  if(fmt==="bye") return 0;
+  if(fmt==="aller-retour") return 3;
+  if(fmt==="robin3") return 3;
+  if(fmt==="nordique4") return 7;
+  var p=1; while(p<n) p*=2;
+  var byes=p-n, t1=(n-byes)/2|0, total=t1, slots=t1+byes;
+  while(slots>1){ total+=(slots/2|0); slots=slots/2|0; }
+  total+=1;
+  return total;
+}
+function fmtTime(mins){
+  var h=mins/60|0, m=mins%60|0;
+  return (h<10?"0":"")+h+"h"+(m<10?"0":"")+m;
+}
+
+// ================================================================
+// STATE
+// ================================================================
+var _inscriptions = [];
+var _compData = null;
+var _connected = false;
+
+// ================================================================
+// FIREBASE INIT
+// ================================================================
+function init(){
+  if(!window.firebase) return;
+  var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(firebaseConfig);
+  var db = firebase.database(app);
+
+  // Connexion status
+  db.ref('.info/connected').on('value', function(snap){
+    _connected = snap.val() === true;
+    var el = document.getElementById('conn');
+    if(_connected){
+      el.className = 'conn on';
+      el.innerHTML = '<span class="cdot"></span> LIVE';
+    } else {
+      el.className = 'conn off';
+      el.innerHTML = '<span class="cdot"></span> HORS LIGNE';
+    }
+  });
+
+  // Écouter les inscriptions
+  db.ref('inscriptions_' + COMP_KEY).on('value', function(snap){
+    var data = snap.val();
+    if(!data){ _inscriptions = []; }
+    else { _inscriptions = Array.isArray(data) ? data : Object.values(data); }
+    render();
+  });
+
+  // Écouter l'état de la compétition
+  db.ref('competitions/' + COMP_KEY).on('value', function(snap){
+    _compData = snap.val();
+    render();
+  });
+}
+
+// ================================================================
+// COMPUTE PLANNING
+// ================================================================
+function compute(){
+  // Regrouper les inscrits par catégorie age + poids
+  var catPools = {}; // { ageCatId: { "Poussin -25kg": [inscrits...] } }
+
+  _inscriptions.forEach(function(ins){
+    var ac = getAgeCat(ins.age);
+    if(!ac) return;
+    var cp = getCatPoids(ac, ins.poids);
+    var key = ac.lbl + " " + cp;
+    if(!catPools[ac.id]) catPools[ac.id] = {};
+    if(!catPools[ac.id][key]) catPools[ac.id][key] = [];
+    catPools[ac.id][key].push(ins);
+  });
+
+  // Pour chaque catégorie, calculer les poules théoriques et le planning
+  var result = [];
+  var currentTime = START_HOUR;
+
+  AGE_CATS.forEach(function(ac){
+    var pools = catPools[ac.id] || {};
+    var poolKeys = Object.keys(pools).sort();
+    var totalInscrits = 0;
+    var totalFightsTheory = 0;
+    var poolData = [];
+    var dur = getDur(ac.a1);
+
+    poolKeys.forEach(function(key){
+      var fighters = pools[key];
+      var n = fighters.length;
+      totalInscrits += n;
+      var fmt = getFormat(n);
+      var nf = nbFightsForFormat(n);
+      totalFightsTheory += nf;
+      poolData.push({ name: key, count: n, format: fmt, fightCount: nf });
+    });
+
+    // Comptabiliser les vrais combats depuis Firebase (si poules générées)
+    var realFights = [];
+    var realDone = 0;
+    var realTotal = 0;
+    var poolTableMap = {};
+    var catStatut = "attente";
+
+    if(_compData){
+      // Statut catégorie
+      if(_compData.ageCats){
+        var arr = Array.isArray(_compData.ageCats) ? _compData.ageCats : Object.values(_compData.ageCats);
+        var found = arr.find(function(x){ return x.id === ac.id; });
+        if(found) catStatut = found.statut || "attente";
+      }
+      // Combats réels
+      if(_compData.fights){
+        var allFights = Array.isArray(_compData.fights) ? _compData.fights : Object.values(_compData.fights);
+        allFights.forEach(function(f){
+          // Matcher les combats de cette catégorie
+          if(f.cat && f.cat.indexOf(ac.lbl) === 0){
+            realFights.push(f);
+            realTotal++;
+            if(f.done) realDone++;
+          }
+        });
+      }
+      // Pool tables
+      if(_compData.poolTables){
+        Object.keys(_compData.poolTables).forEach(function(k){
+          if(k.indexOf(ac.lbl) === 0){
+            poolTableMap[k] = _compData.poolTables[k];
+          }
+        });
+      }
+      // Enrichir poolData avec les vrais combats
+      if(_compData.pools){
+        poolData.forEach(function(pd){
+          var poolObj = _compData.pools[pd.name];
+          if(poolObj && poolObj.fights){
+            var pf = Array.isArray(poolObj.fights) ? poolObj.fights : Object.values(poolObj.fights);
+            var done = pf.filter(function(f){ return f.done; }).length;
+            var total = pf.length;
+            pd.realDone = done;
+            pd.realTotal = total;
+          }
+          pd.table = poolTableMap[pd.name] || null;
+        });
+      }
+    }
+
+    // Répartition sur 4 tables (théorique) pour estimer la durée
+    var tableFights = [0,0,0,0];
+    var sortedPools = poolData.slice().sort(function(a,b){ return b.fightCount - a.fightCount; });
+    sortedPools.forEach(function(pd){
+      var mi = 0;
+      for(var i=1;i<4;i++){ if(tableFights[i]<tableFights[mi]) mi=i; }
+      tableFights[mi] += pd.fightCount;
+    });
+    var maxFights = Math.max.apply(null, tableFights);
+    var catDurMin = maxFights > 0 ? maxFights * (dur + PAUSE_BETWEEN) / 60 : 0;
+
+    var convocTime = currentTime - CONVOC_AVANT;
+    if(convocTime < 480) convocTime = 480;
+
+    var useRealTotal = realTotal > 0;
+
+    result.push({
+      ac: ac,
+      pools: poolData,
+      totalInscrits: totalInscrits,
+      totalFightsTheory: totalFightsTheory,
+      realTotal: useRealTotal ? realTotal : totalFightsTheory,
+      realDone: realDone,
+      catDurMin: catDurMin,
+      durCombat: dur,
+      convocTime: convocTime,
+      startTime: currentTime,
+      statut: catStatut,
+      poolTableMap: poolTableMap
+    });
+
+    currentTime += catDurMin + PAUSE_CAT;
+  });
+
+  return result;
+}
+
+// ================================================================
+// RENDER
+// ================================================================
+function render(){
+  var cats = compute();
+  var totalInscrits = 0, totalFights = 0, totalDone = 0;
+  cats.forEach(function(c){
+    totalInscrits += c.totalInscrits;
+    totalFights += c.realTotal;
+    totalDone += c.realDone;
+  });
+
+  // Stats
+  document.getElementById('s-inscrits').textContent = totalInscrits;
+  document.getElementById('s-combats').textContent = totalFights;
+  document.getElementById('s-done').textContent = totalDone;
+
+  // Fin estimée
+  var lastCat = cats[cats.length - 1];
+  if(lastCat){
+    var endMin = lastCat.startTime + lastCat.catDurMin;
+    document.getElementById('s-fin').textContent = fmtTime(Math.round(endMin));
+  }
+
+  // Progression globale
+  var pct = totalFights > 0 ? Math.round(totalDone / totalFights * 100) : 0;
+  document.getElementById('gfill').style.width = pct + '%';
+  document.getElementById('gpct').textContent = pct + '%';
+
+  // Catégories
+  var html = '';
+  cats.forEach(function(c, idx){
+    var isActive = c.statut === 'combats';
+    var isDone = c.statut === 'termine';
+    var cardClass = 'cat-card';
+    if(isActive) cardClass += ' active open';
+    else if(isDone) cardClass += ' done';
+
+    // Badge statut
+    var badgeClass = 'badge-attente', badgeText = '⏳ EN ATTENTE';
+    if(c.statut === 'pesee'){ badgeClass='badge-pesee'; badgeText='⚖ PESÉE'; }
+    else if(c.statut === 'pret'){ badgeClass='badge-pret'; badgeText='✔ PRÊT'; }
+    else if(c.statut === 'combats'){ badgeClass='badge-combats'; badgeText='🥊 EN COURS'; }
+    else if(c.statut === 'termine'){ badgeClass='badge-termine'; badgeText='🏁 TERMINÉ'; }
+
+    var catPct = c.realTotal > 0 ? Math.round(c.realDone / c.realTotal * 100) : 0;
+    var durLabel = c.durCombat === 180 ? '3 min' : '4 min';
+
+    html += '<div class="' + cardClass + '" id="cc-' + c.ac.id + '">';
+    html += '<div class="cat-hdr" onclick="toggleCat(\'' + c.ac.id + '\')">';
+    html += '<div>';
+    html += '<div class="cat-name">' + c.ac.lbl.toUpperCase() + ' <span style="font-family:var(--fm);font-size:.55rem;color:var(--muted);letter-spacing:1px">' + c.totalInscrits + ' inscrits</span></div>';
+    html += '<div style="font-family:var(--fm);font-size:.48rem;color:var(--muted);letter-spacing:1px;margin-top:2px">';
+    html += '🔔 ' + fmtTime(Math.round(c.convocTime)) + ' · ⏱ ' + fmtTime(Math.round(c.startTime)) + ' · ' + durLabel + '/combat';
+    html += '</div>';
+    html += '</div>';
+    html += '<div style="display:flex;align-items:center;gap:8px">';
+    if(catPct > 0 && !isDone) html += '<span style="font-family:var(--fm);font-size:.52rem;color:var(--gold)">' + catPct + '%</span>';
+    html += '<span class="cat-badge ' + badgeClass + '">' + badgeText + '</span>';
+    html += '</div>';
+    html += '</div>';
+
+    // Body
+    html += '<div class="cat-body">';
+
+    // Timing
+    html += '<div class="timing">';
+    html += '<div class="timing-item">🔔 Convocation <strong>' + fmtTime(Math.round(c.convocTime)) + '</strong></div>';
+    html += '<div class="timing-item">⏱ Début <strong>' + fmtTime(Math.round(c.startTime)) + '</strong></div>';
+    html += '<div class="timing-item">⏳ Durée <strong>~' + Math.round(c.catDurMin) + ' min</strong></div>';
+    html += '<div class="timing-item">🥊 <strong>' + c.realDone + '/' + c.realTotal + '</strong> combats</div>';
+    html += '</div>';
+
+    // Cat progress
+    html += '<div class="cat-prog">';
+    var fillColor = isDone ? 'var(--green)' : isActive ? 'var(--gold)' : 'var(--muted)';
+    html += '<div class="cat-prog-bar"><div class="cat-prog-fill" style="width:' + catPct + '%;background:' + fillColor + '"></div></div>';
+    html += '</div>';
+
+    // Pools
+    if(c.pools.length > 0){
+      html += '<div style="margin-top:10px">';
+      c.pools.forEach(function(p){
+        if(p.format === 'bye') return; // skip exempts
+        var pDone = p.realDone !== undefined ? p.realDone : 0;
+        var pTotal = p.realTotal !== undefined ? p.realTotal : p.fightCount;
+        var pPct = pTotal > 0 ? Math.round(pDone / pTotal * 100) : 0;
+        var fillClass = pPct >= 100 ? 'complete' : pDone > 0 ? 'active' : 'pending';
+
+        html += '<div class="pool-row">';
+        html += '<div class="pool-name">' + p.name.replace(c.ac.lbl + ' ', '') + '</div>';
+        html += '<div class="pool-info">';
+        html += '<span class="pool-fmt">' + p.count + ' · ' + getFmtLabel(p.format) + '</span>';
+        if(p.table) html += '<span class="table-tag">' + p.table + '</span>';
+        html += '<div class="pool-prog">';
+        html += '<div class="pool-bar"><div class="pool-fill ' + fillClass + '" style="width:' + pPct + '%"></div></div>';
+        html += '<span class="pool-count">' + pDone + '/' + pTotal + '</span>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Heure de fin estimée
+    var endCat = c.startTime + c.catDurMin;
+    html += '<div class="est">Fin estimée : <strong>' + fmtTime(Math.round(endCat)) + '</strong></div>';
+
+    html += '</div>'; // cat-body
+    html += '</div>'; // cat-card
+  });
+
+  document.getElementById('cats').innerHTML = html;
+
+  // Last update
+  var now = new Date();
+  document.getElementById('lastup').textContent = 'Dernière mise à jour : ' + now.toLocaleTimeString('fr-FR');
+}
+
+function toggleCat(id){
+  var el = document.getElementById('cc-' + id);
+  if(el) el.classList.toggle('open');
+}
+
+// ================================================================
+// BOOT
+// ================================================================
+if(document.readyState === 'complete') init();
+else window.addEventListener('load', init);
+</script>
+</body>
+</html>
