@@ -1108,7 +1108,8 @@ function doLogin(){
     };
     var H={};
     Object.keys(_defaultPwd).forEach(function(k){ H[k]=_defaultPwd[k]; });
-    Object.keys(_configPasswords).forEach(function(k){ if(_configPasswords[k]&&_configPasswords[k].length===64) H[k]=_configPasswords[k]; });
+    //Object.keys(_configPasswords).forEach(function(k){ if(_configPasswords[k]&&_configPasswords[k].length===64) H[k]=_configPasswords[k]; });
+    Object.keys(_configPasswords).forEach(function(k){ if(k!=='admin' && _configPasswords[k]&&_configPasswords[k].length===64) H[k]=_configPasswords[k]; });
     if(hex!==H[r]){var le=$('lerr');if(le)le.style.display='block';var ip=$('inp-code');if(ip){ip.value='';ip.focus();}return;}
     var le=$('lerr');if(le)le.style.display='none';
     role=r;

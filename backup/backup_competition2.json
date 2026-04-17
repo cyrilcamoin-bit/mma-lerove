@@ -1,0 +1,504 @@
+{
+  "ageCats": [
+    {
+      "id": "poussin",
+      "poulesFaites": false,
+      "statut": "pret"
+    },
+    {
+      "id": "benjamin",
+      "poulesFaites": false,
+      "statut": "attente"
+    },
+    {
+      "id": "minime",
+      "poulesFaites": false,
+      "statut": "attente"
+    },
+    {
+      "id": "cadet",
+      "poulesFaites": false,
+      "statut": "attente"
+    },
+    {
+      "id": "junior",
+      "poulesFaites": false,
+      "statut": "attente"
+    }
+  ],
+  "combattants": [
+    {
+      "cat": "Junior",
+      "id": "ins-1774296388618"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1774297590218"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1774298355970"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1774299363541"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1774336665655"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1774358311357"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1774370964677"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1774371266997"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1774378162159"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1774381506897"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1774384115065"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1774451570438"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1774451698617"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1774451747927"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1774451806560"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1774455373531"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1774458168427"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1774459610749"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1774459917525"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1774464036343"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1774467192935"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1774550374827"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1774599357112"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1774632896676"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1774729717369"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1774790597520"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1774889698421"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1774891505784"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1774975563729"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1774978867051"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1774984394564"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775053672283"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775055147052"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775063357987"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775066691594"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775075441298"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775075634813"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775111245707"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775130135545"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775136982123"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775140624619"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775140671942"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775142925591"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775145568408"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775147484449"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775148737675"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775150943063"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775151945661"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775152810702"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775153473468"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775154070928"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775160195386"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775236190464"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775237820762"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775245747960"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775246555208"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775297526750"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775297604858"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775315411582"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775319836513"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775333645554"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775414588712"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775481646282"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775485972558"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775488777085"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775556049049"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775578485851"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775585264395"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775586092552"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775590258285"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775643722694"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775646801872"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775648055076"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775651156948"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775660916269"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775663702038"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775664195445"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775668793105"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775669751497"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775674345875"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775677400066"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775679813605"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775680168231"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775680602201"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775726217166"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775747196131"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775758005943"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775759304696"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775759518711"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775760398850"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775763423319"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775764436294"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775765617944"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775802724850"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775829916004"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775836051214"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775836492267"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775841712441"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775845142717"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775846430395"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775848540200"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775849605997"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775853639331"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1775853804387"
+    },
+    {
+      "cat": "Minime",
+      "id": "ins-1775857433700"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1775857634923"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775889087159"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775897104679"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1775897170960"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775897375341"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775898007962"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775900845569"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1775912432822"
+    },
+    {
+      "cat": "Poussin",
+      "id": "ins-1776001132554"
+    },
+    {
+      "cat": "Benjamin",
+      "id": "ins-1776014450936"
+    },
+    {
+      "cat": "Junior",
+      "id": "ins-1776097556924"
+    },
+    {
+      "cat": "Cadet",
+      "id": "ins-1776100474377"
+    }
+  ],
+  "inscOpen": false,
+  "pd": {
+    "poussin": false
+  },
+  "savedAt": 1776102478755
+}
